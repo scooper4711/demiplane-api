@@ -40,6 +40,24 @@ export class DemiplaneClient {
   private graphqlToken: string | null = null;
 
   /**
+   * Sets the GraphQL bearer token directly, bypassing the authenticate flow.
+   * Use this when you already have a valid Hasura JWT (e.g., obtained via
+   * browser login or a separate auth script).
+   *
+   * @param token - A valid Demiplane GraphQL bearer token (JWT).
+   */
+  setToken(token: string): void {
+    this.graphqlToken = token;
+  }
+
+  /**
+   * Returns whether the client currently has a token set.
+   */
+  isAuthenticated(): boolean {
+    return this.graphqlToken !== null;
+  }
+
+  /**
    * Authenticates with Demiplane using email and password credentials.
    * On success, stores an internal GraphQL token for subsequent API calls.
    *
