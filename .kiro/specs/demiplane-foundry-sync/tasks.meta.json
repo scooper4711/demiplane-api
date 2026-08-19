@@ -7,6 +7,10 @@
     "6.3 Write unit and property tests for parseCharacterLinkInput (Properties 11, 12, 13)": {
       "status": "passed",
       "lastRunTimestamp": 1787151632021
+    },
+    "5.2 Write unit and property tests for SlugMapper (Properties 3, 4)": {
+      "status": "passed",
+      "lastRunTimestamp": 1787152183272
     }
   },
   "executionHistory": {
@@ -234,6 +238,16 @@
         "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
         "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
         "timestamp": 1787150647374
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152090212
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152325484
       }
     ],
     "7.2 Implement attribute boost and skill training import logic": [
@@ -462,6 +476,25 @@
         "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
         "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
         "timestamp": 1787152071705
+      }
+    ],
+    "5.2 Write unit and property tests for SlugMapper (Properties 3, 4)": [
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152089453
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152324586
+      }
+    ],
+    "5. Implement SlugMapper in the Foundry module": [
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152324639
       }
     ]
   }

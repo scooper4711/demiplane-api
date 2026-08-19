@@ -97,7 +97,7 @@ Tasks are ordered so that foundational library work completes before module-leve
   - Ensure all tests pass, ask the user if questions arise.
   - Push branch to remote: `git push -u origin feat/demiplane-foundry-sync`
 
-- [ ] 5. Implement SlugMapper in the Foundry module
+- [x] 5. Implement SlugMapper in the Foundry module
   - [x] 5.1 Create SlugMapper class with slug transformation and compendium resolution
     - Strip trailing `-rm` suffix from slugs when present
     - Pass non-rm slugs unchanged
@@ -107,7 +107,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Log info when duplicate slug found across packs
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ] 5.2 Write unit and property tests for SlugMapper (Properties 3, 4)
+  - [x] 5.2 Write unit and property tests for SlugMapper (Properties 3, 4)
     - Mock Foundry compendium pack indexes
     - **Property 3: Slug transformation is idempotent on non-rm slugs**
     - **Validates: Requirements 8.2**
@@ -142,7 +142,7 @@ Tasks are ordered so that foundational library work completes before module-leve
       - Includes tasks 6.1, 6.3 — link input parser and tests
 
 - [ ] 7. Implement ImportOrchestrator
-  - [ ] 7.1 Create ImportOrchestrator class with full import pipeline
+  - [x] 7.1 Create ImportOrchestrator class with full import pipeline
     - Accept DemiplaneClient and SlugMapper as constructor dependencies
     - Fetch character data via client
     - Extract character name and level from Custom_Engines
