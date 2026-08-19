@@ -93,7 +93,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add findEnginesByNamePattern and fix no-match reference return`
       - Includes tasks 3.1, 3.2, 3.3 — engine utility enhancements and property tests
 
-- [ ] 4. Checkpoint - Ensure all demiplane-api tests pass
+- [x] 4. Checkpoint - Ensure all demiplane-api tests pass
   - Ensure all tests pass, ask the user if questions arise.
   - Push branch to remote: `git push -u origin feat/demiplane-foundry-sync`
 
@@ -141,7 +141,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add parseCharacterLinkInput with URL and UUID parsing`
       - Includes tasks 6.1, 6.3 — link input parser and tests
 
-- [ ] 7. Implement ImportOrchestrator
+- [x] 7. Implement ImportOrchestrator
   - [x] 7.1 Create ImportOrchestrator class with full import pipeline
     - Accept DemiplaneClient and SlugMapper as constructor dependencies
     - Fetch character data via client
@@ -155,7 +155,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Return ImportSummary with itemsImported, itemsSkipped, errors counts
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 14.2, 14.3_
 
-  - [ ] 7.4 Write unit tests for ImportOrchestrator
+  - [x] 7.4 Write unit tests for ImportOrchestrator
     - Mock DemiplaneClient and Foundry actor API
     - Verify correct ordering of createEmbeddedDocuments calls
     - Test reconciliation logic, unresolved slug handling, dry run mode
@@ -163,7 +163,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add ImportOrchestrator with item reconciliation and ordering`
       - Includes tasks 7.1, 7.4 — import pipeline and tests
 
-  - [ ] 7.2 Implement attribute boost and skill training import logic
+  - [x] 7.2 Implement attribute boost and skill training import logic
     - Identify engines with name `core/selection/attribute/boost.eng` and extract attribute slugs
     - Identify engines with name `core/selection/skill/increase/index.eng` and extract skill slugs
     - Apply boosts in parentEngine hierarchy/level order
@@ -173,7 +173,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add attribute boost and skill training import logic`
       - Includes task 7.2
 
-  - [ ] 7.3 Implement dry run mode for import
+  - [x] 7.3 Implement dry run mode for import
     - When `dryRun` option is true, run full read pipeline (fetch, slug map, reconciliation) but skip all write operations
     - Return ImportSummary with `preview: true` reflecting what would happen
     - Do not call `createEmbeddedDocuments`, `deleteEmbeddedDocuments`, or modify actor state
@@ -181,8 +181,8 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add dry run mode to ImportOrchestrator`
       - Includes task 7.3
 
-- [ ] 8. Implement ExportManager with debounce and rate limiting
-  - [ ] 8.1 Create ExportManager class with queueChange and flush
+- [x] 8. Implement ExportManager with debounce and rate limiting
+  - [x] 8.1 Create ExportManager class with queueChange and flush
     - Accumulate field changes and reset 2-second debounce timer
     - Batch all changes within debounce window into single API call
     - Rate limit to 30 API calls per 60-second rolling window per character
@@ -190,7 +190,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Display ui.notifications.error and retain pending changes after all retries fail
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.8_
 
-  - [ ] 8.3 Write unit and property tests for ExportManager (Properties 9, 10)
+  - [x] 8.3 Write unit and property tests for ExportManager (Properties 9, 10)
     - Use fake timers to test debounce collapsing and rate limiting
     - **Property 9: Debounce batching collapses rapid changes**
     - **Validates: Requirements 10.3**
@@ -199,15 +199,15 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add ExportManager with debounce and rate limiting`
       - Includes tasks 8.1, 8.3 — export manager and tests
 
-  - [ ] 8.2 Implement dry run mode for export
+  - [x] 8.2 Implement dry run mode for export
     - When `dryRun` option is true, collect pending changes and return in `ExportResult.preview` without calling `updateCharacterV2`
     - Still perform conflict detection so users can see if conflict would occur
     - _Requirements: 18.3, 18.5_
     - **Commit**: `feat: Add dry run mode to ExportManager`
       - Includes task 8.2
 
-- [ ] 9. Implement ConflictResolver
-  - [ ] 9.1 Create ConflictResolver class
+- [x] 9. Implement ConflictResolver
+  - [x] 9.1 Create ConflictResolver class
     - Fetch remote version via `fetchCharacterVersion` and compare against stored version in actor flags
     - Return `{ conflicted: false }` when versions match
     - Return `{ conflicted: true, localVersion, remoteVersion }` when remote > stored
@@ -217,18 +217,18 @@ Tasks are ordered so that foundational library work completes before module-leve
     - For "cancel": abort push, leave both sides unchanged, retain pending changes
     - _Requirements: 10.5, 10.6, 10.7, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-  - [ ] 9.2 Write unit tests for ConflictResolver
+  - [x] 9.2 Write unit tests for ConflictResolver
     - Test version comparison, conflict detection, each resolution strategy
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
     - **Commit**: `feat: Add ConflictResolver with version comparison and strategies`
       - Includes tasks 9.1, 9.2 — conflict resolution and tests
 
-- [ ] 10. Checkpoint - Ensure all module core logic tests pass
+- [x] 10. Checkpoint - Ensure all module core logic tests pass
   - Ensure all tests pass, ask the user if questions arise.
   - Push branch to remote: `git push`
 
-- [ ] 11. Implement HookManager for session state change detection
-  - [ ] 11.1 Refactor hooks.ts into HookManager class
+- [x] 11. Implement HookManager for session state change detection
+  - [x] 11.1 Refactor hooks.ts into HookManager class
     - Accept ExportManager as constructor dependency
     - Register hooks: `updateActor` (HP, temp HP, hero points, focus points), `updateItem` (consumable quantity), `createItem`, `deleteItem`
     - Detect relevant changes and call `exportManager.queueChange` with correct store name and value
@@ -236,15 +236,15 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Map currency changes to corresponding store names
     - _Requirements: 10.1, 10.2, 10.9_
 
-  - [ ] 11.2 Write unit tests for HookManager
+  - [x] 11.2 Write unit tests for HookManager
     - Mock ExportManager and verify correct queueChange calls for various actor/item changes
     - Test filtering of non-character actors and unlinked actors
     - _Requirements: 10.1, 10.2_
     - **Commit**: `feat: Add HookManager for session state change detection`
       - Includes tasks 11.1, 11.2 — hook management and tests
 
-- [ ] 12. Implement SyncTabRenderer and actor sheet integration
-  - [ ] 12.1 Create SyncTabRenderer class
+- [x] 12. Implement SyncTabRenderer and actor sheet integration
+  - [x] 12.1 Create SyncTabRenderer class
     - Render Sync tab only when actor has linked character UUID in flags
     - Display status section: linked UUID, last sync timestamp, local/remote versions
     - Display pending changes list with field name and value
@@ -254,7 +254,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Render "Import from Demiplane" / "Push to Demiplane" action buttons
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.11_
 
-  - [ ] 12.4 Write unit tests for SyncTabRenderer
+  - [x] 12.4 Write unit tests for SyncTabRenderer
     - Test tab renders only for linked actors
     - Test correct display of status, pending changes, issues, summary
     - Test button label changes in dry run mode
@@ -262,7 +262,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add SyncTabRenderer with status and action display`
       - Includes tasks 12.1, 12.4 — sync tab rendering and tests
 
-  - [ ] 12.2 Implement dry run UI indicators and dynamic labels
+  - [x] 12.2 Implement dry run UI indicators and dynamic labels
     - Display persistent dry run badge/banner when `dryRun` setting is enabled (distinct from in-progress spinner)
     - Change button labels to "Preview Import" / "Preview Push" when dry run is enabled
     - Update labels immediately on settings change via hook — no page reload needed
@@ -271,7 +271,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add dry run UI indicators and dynamic button labels`
       - Includes task 12.2
 
-  - [ ] 12.3 Implement per-actor character link dialog
+  - [x] 12.3 Implement per-actor character link dialog
     - Input field accepting bare UUID or full Demiplane character URL
     - Parse input via `parseCharacterLinkInput` on submission
     - Validate extracted UUID format, then fetch character version to confirm accessibility
@@ -281,8 +281,8 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add per-actor character link dialog`
       - Includes task 12.3
 
-- [ ] 13. Wire components together in module entrypoint
-  - [ ] 13.1 Update module.ts to instantiate and connect all components
+- [x] 13. Wire components together in module entrypoint
+  - [x] 13.1 Update module.ts to instantiate and connect all components
     - Create DemiplaneClient, authenticate from settings on ready
     - Instantiate SlugMapper with pack search order
     - Instantiate ConflictResolver, ExportManager, ImportOrchestrator
@@ -292,19 +292,19 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Read `dryRun` setting and pass to operations
     - _Requirements: 12.1, 12.2, 15.8, 15.9, 18.6_
 
-  - [ ] 13.2 Write property test for dry run observational guarantee (Property 14)
+  - [x] 13.2 Write property test for dry run observational guarantee (Property 14)
     - **Property 14: Dry run mode is purely observational**
     - **Validates: Requirements 18.1, 18.3, 18.4, 18.5**
     - Use mock actor and spy on DemiplaneClient to verify no mutations sent
     - **Commit**: `feat: Wire module entrypoint and add dry run property test`
       - Includes tasks 13.1, 13.2 — component wiring and dry run observational guarantee test
 
-- [ ] 14. Checkpoint - Ensure all Foundry module tests pass
+- [x] 14. Checkpoint - Ensure all Foundry module tests pass
   - Ensure all tests pass, ask the user if questions arise.
   - Push branch to remote: `git push`
 
-- [ ] 15. Create documentation
-  - [ ] 15.1 Write demiplane-api README
+- [x] 15. Create documentation
+  - [x] 15.1 Write demiplane-api README
     - Package purpose, public API surface, authentication flow
     - Usage examples: authenticate, fetch character, update character, query engines
     - Extension points section for new game-system integrations
@@ -312,18 +312,18 @@ Tasks are ordered so that foundational library work completes before module-leve
     - _Requirements: 17.1, 17.2_
     - **Commit**: `docs: Add demiplane-api README with usage examples`
 
-  - [ ] 15.2 Add JSDoc comments to all exported symbols in demiplane-api
+  - [x] 15.2 Add JSDoc comments to all exported symbols in demiplane-api
     - Document all exported functions, classes, interfaces, and type aliases
     - Include description, parameters with types, return value
     - _Requirements: 17.3_
     - **Commit**: `docs: Add JSDoc comments to all exported demiplane-api symbols`
 
-  - [ ] 15.3 Write foundry-demiplane-pf2e user README
+  - [x] 15.3 Write foundry-demiplane-pf2e user README
     - What the module does, installation, configuration (credentials + actor linking), basic usage
     - _Requirements: 17.4_
     - **Commit**: `docs: Add foundry-demiplane-pf2e user README`
 
-  - [ ] 15.4 Write docs/ARCHITECTURE.md for Foundry module
+  - [x] 15.4 Write docs/ARCHITECTURE.md for Foundry module
     - Data flow diagrams (import and export)
     - Hook lifecycle: which hooks registered, what each handler does, debounce/rate-limit integration
     - Slug_Mapper transformation rules and compendium search order
@@ -331,18 +331,18 @@ Tasks are ordered so that foundational library work completes before module-leve
     - _Requirements: 17.5_
     - **Commit**: `docs: Add ARCHITECTURE.md with data flow and hook lifecycle`
 
-  - [ ] 15.5 Write docs/DESIGN.md for Foundry module
+  - [x] 15.5 Write docs/DESIGN.md for Foundry module
     - Design decisions and rationale: populate existing actors, 2s debounce, rate-limit threshold, version-based conflict, email/password auth
     - _Requirements: 17.6_
     - **Commit**: `docs: Add DESIGN.md with rationale for key decisions`
 
-  - [ ] 15.6 Write docs/CONTRIBUTING.md for Foundry module
+  - [x] 15.6 Write docs/CONTRIBUTING.md for Foundry module
     - Dev environment setup, running tests, code style, adding new class support, PR process
     - _Requirements: 17.7_
     - **Commit**: `docs: Add CONTRIBUTING.md with dev setup and PR process`
 
-- [ ] 16. Set up Playwright integration test infrastructure
-  - [ ] 16.1 Create integration test scaffolding with Foundry Node CLI management
+- [x] 16. Set up Playwright integration test infrastructure
+  - [x] 16.1 Create integration test scaffolding with Foundry Node CLI management
     - Configure Foundry VTT Node CLI for programmatic instance start/stop
     - Expose environment variable configuration for Foundry data path, port, admin password
     - Implement world reset mechanism between test runs
@@ -350,7 +350,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - _Requirements: 16.1, 16.2, 16.9, 16.10_
     - **Commit**: `test: Add Playwright integration test scaffolding with Foundry CLI`
 
-  - [ ] 16.2 Implement Valeros import validation tests (levels 1, 3, 5)
+  - [x] 16.2 Implement Valeros import validation tests (levels 1, 3, 5)
     - Use Playwright to automate import operations via Foundry UI
     - Compare imported actor against Foundry's built-in Valeros reference data
     - Assert ancestry, class, feats, attribute scores, skill proficiencies, equipment, session state values
@@ -358,7 +358,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - _Requirements: 16.3, 16.4, 16.5, 16.6, 16.7, 16.8_
     - **Commit**: `test: Add Valeros import validation tests for levels 1, 3, 5`
 
-- [ ] 17. Final checkpoint - Ensure all tests pass
+- [x] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
   - Push branch to remote: `git push`
 
