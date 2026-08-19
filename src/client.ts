@@ -25,9 +25,36 @@ function validateNexusId(nexusId: number): void {
   }
 }
 
+/**
+ * Client for interacting with the Demiplane GraphQL API.
+ * Handles authentication, character data retrieval, and character updates.
+ *
+ * @example
+ * ```ts
+ * const client = new DemiplaneClient();
+ * await client.authenticate("user@example.com", "password");
+ * const data = await client.fetchCharacterData("some-uuid");
+ * ```
+ */
 export class DemiplaneClient {
   private graphqlToken: string | null = null;
 
+  /**
+   * Authenticates with Demiplane using email and password credentials.
+   * On success, stores an internal GraphQL token for subsequent API calls.
+   *
+   * @param email - The user's Demiplane account email.
+   * @param password - The user's Demiplane account password.
+   * @throws {Error} If email or password is empty.
+   * @throws {DemiplaneApiError} If the login or token request fails.
+   * @throws {Error} If the response cannot be parsed or is missing expected fields.
+   *
+   * @example
+   * ```ts
+   * const client = new DemiplaneClient();
+   * await client.authenticate("user@example.com", "s3cret");
+   * ```
+   */
   async authenticate(email: string, password: string): Promise<void> {
     if (!email || !password) {
       throw new Error(
@@ -108,6 +135,21 @@ export class DemiplaneClient {
     this.graphqlToken = graphqlToken;
   }
 
+  /**
+   * Fetches the full character data payload for a given character UUID.
+   *
+   * @param characterId - The UUID of the character to fetch.
+   * @returns The character's {@link CharacterData} including all engine entries.
+   * @throws {Error} If the characterId is not a valid UUID.
+   * @throws {Error} If the character is not found or has no engines array.
+   * @throws {DemiplaneApiError} If the GraphQL request fails.
+   *
+   * @example
+   * ```ts
+   * const data = await client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+   * console.log(data.engines.length);
+   * ```
+   */
   async fetchCharacterData(characterId: string): Promise<CharacterData> {
     validateUuid(characterId);
 
@@ -138,6 +180,16 @@ export class DemiplaneClient {
     return characterData;
   }
 
+  /**
+   * Fetches the UUID and current version number for a character.
+   * Useful for optimistic concurrency checks before updates.
+   *
+   * @param characterId - The UUID of the character.
+   * @returns A {@link CharacterVersion} with the character's UUID and version number.
+   * @throws {Error} If the characterId is not a valid UUID.
+   * @throws {Error} If the character is not found.
+   * @throws {DemiplaneApiError} If the GraphQL request fails.
+   */
   async fetchCharacterVersion(characterId: string): Promise<CharacterVersion> {
     validateUuid(characterId);
 
@@ -162,6 +214,16 @@ export class DemiplaneClient {
     return character;
   }
 
+  /**
+   * Fetches the attribute mapping configuration for a game system (nexus).
+   * The mapping defines how character data fields correspond to VTT token attributes.
+   *
+   * @param nexusId - The numeric nexus (game system) identifier.
+   * @returns The {@link AttributeMapping} for the specified nexus.
+   * @throws {Error} If nexusId is not a positive integer.
+   * @throws {Error} If no attribute mapping exists for the given nexus.
+   * @throws {DemiplaneApiError} If the GraphQL request fails.
+   */
   async fetchAttributeMapping(nexusId: number): Promise<AttributeMapping> {
     validateNexusId(nexusId);
 
@@ -196,6 +258,14 @@ export class DemiplaneClient {
     };
   }
 
+  /**
+   * Persists updated character data to the Demiplane API.
+   * Requires prior authentication via {@link authenticate}.
+   *
+   * @param options - The update payload including character ID, data, and optional metadata.
+   * @returns `true` if the update succeeded, `false` otherwise.
+   * @throws {Error} If the client has not been authenticated.
+   */
   async updateCharacter(options: UpdateCharacterOptions): Promise<boolean> {
     if (!this.graphqlToken) {
       throw new Error(
