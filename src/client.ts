@@ -1,5 +1,5 @@
+import { DemiplaneApiError } from "./errors.js";
 import type {
-  DemiplaneAuthTokens,
   CharacterVersion,
   CharacterData,
   AttributeMapping,
@@ -8,44 +8,139 @@ import type {
 
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
 const APP_BASE = "https://app.demiplane.com";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function validateUuid(characterId: string): void {
+  if (!UUID_PATTERN.test(characterId)) {
+    throw new Error(`Invalid UUID format: ${characterId}`);
+  }
+}
+
+function validateNexusId(nexusId: number): void {
+  if (!Number.isInteger(nexusId) || nexusId <= 0) {
+    throw new Error(
+      `Invalid nexus ID: must be a positive integer, got ${String(nexusId)}`
+    );
+  }
+}
 
 export class DemiplaneClient {
-  private tokens: DemiplaneAuthTokens | null = null;
+  private graphqlToken: string | null = null;
 
-  async authenticate(sessionCookie: string): Promise<DemiplaneAuthTokens> {
-    const sessionResponse = await fetch(`${APP_BASE}/api/auth/token`, {
-      headers: { cookie: sessionCookie },
-    });
-
-    if (!sessionResponse.ok) {
+  async authenticate(email: string, password: string): Promise<void> {
+    if (!email || !password) {
       throw new Error(
-        `Auth token request failed: ${String(sessionResponse.status)}`
+        "Both email and password are required for authentication"
       );
     }
 
-    const sessionToken = await sessionResponse.text();
-
-    const graphqlResponse = await fetch(
-      `${APP_BASE}/api/generate-graphql-token`,
-      {
+    const loginUrl = `${APP_BASE}/api/auth/login`;
+    let loginResponse: Response;
+    try {
+      loginResponse = await fetch(loginUrl, {
         method: "POST",
-        headers: { cookie: sessionCookie },
-      }
-    );
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      throw new DemiplaneApiError(0, "authentication request", loginUrl);
+    }
+
+    if (!loginResponse.ok) {
+      throw new DemiplaneApiError(
+        loginResponse.status,
+        "authentication request",
+        loginUrl
+      );
+    }
+
+    let loginData: { sessionToken?: string };
+    try {
+      loginData = (await loginResponse.json()) as { sessionToken?: string };
+    } catch {
+      throw new Error(
+        "Failed to parse authentication response as JSON for operation: authentication request"
+      );
+    }
+
+    const sessionToken = loginData.sessionToken;
+    if (!sessionToken) {
+      throw new Error("Authentication response missing session token");
+    }
+
+    const graphqlTokenUrl = `${APP_BASE}/api/generate-graphql-token`;
+    let graphqlResponse: Response;
+    try {
+      graphqlResponse = await fetch(graphqlTokenUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+    } catch {
+      throw new DemiplaneApiError(0, "GraphQL token request", graphqlTokenUrl);
+    }
 
     if (!graphqlResponse.ok) {
-      throw new Error(
-        `GraphQL token request failed: ${String(graphqlResponse.status)}`
+      throw new DemiplaneApiError(
+        graphqlResponse.status,
+        "GraphQL token request",
+        graphqlTokenUrl
       );
     }
 
-    const graphqlToken = await graphqlResponse.text();
+    let graphqlData: { token?: string };
+    try {
+      graphqlData = (await graphqlResponse.json()) as { token?: string };
+    } catch {
+      throw new Error(
+        "Failed to parse GraphQL token response as JSON for operation: GraphQL token request"
+      );
+    }
 
-    this.tokens = { sessionToken, graphqlToken };
-    return this.tokens;
+    const graphqlToken = graphqlData.token;
+    if (!graphqlToken) {
+      throw new Error("GraphQL token response missing token");
+    }
+
+    this.graphqlToken = graphqlToken;
+  }
+
+  async fetchCharacterData(characterId: string): Promise<CharacterData> {
+    validateUuid(characterId);
+
+    const query = `query character_data($id: uuid!) {
+      demiplane_user_character(
+        where: {uuid: {_eq: $id}, deleted_at: {_is_null: true}, enabled: {_eq: true}}
+      ) {
+        data
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      demiplane_user_character: Array<{ data: CharacterData | null }>;
+    }>(query, { id: characterId });
+
+    const character = result.demiplane_user_character[0];
+    if (!character || !character.data) {
+      throw new Error(`Character not found: ${characterId}`);
+    }
+
+    const characterData = character.data;
+    if (!characterData.engines || !Array.isArray(characterData.engines)) {
+      throw new Error(
+        `Invalid response structure: character ${characterId} is missing engines array`
+      );
+    }
+
+    return characterData;
   }
 
   async fetchCharacterVersion(characterId: string): Promise<CharacterVersion> {
+    validateUuid(characterId);
+
     const query = `query character_version($id: uuid!) {
       demiplane_user_character(
         where: {uuid: {_eq: $id}, deleted_at: {_is_null: true}, enabled: {_eq: true}}
@@ -68,6 +163,8 @@ export class DemiplaneClient {
   }
 
   async fetchAttributeMapping(nexusId: number): Promise<AttributeMapping> {
+    validateNexusId(nexusId);
+
     const query = `query getCharacterAttributeMapping($nexusId: Int!) {
       demiplane_character_attribute_mapping(where: {nexus_id: {_eq: $nexusId}}) {
         nexus_id
@@ -86,17 +183,30 @@ export class DemiplaneClient {
 
     const mapping = result.demiplane_character_attribute_mapping[0];
     if (!mapping) {
-      throw new Error(`No attribute mapping found for nexus: ${String(nexusId)}`);
+      throw new Error(
+        `No attribute mapping found for nexus: ${String(nexusId)}`
+      );
     }
 
     return {
       nexusId: mapping.nexus_id,
       id: mapping.id,
-      attributeMapping: mapping.attribute_mapping as AttributeMapping["attributeMapping"],
+      attributeMapping:
+        mapping.attribute_mapping as AttributeMapping["attributeMapping"],
     };
   }
 
   async updateCharacter(options: UpdateCharacterOptions): Promise<boolean> {
+    if (!this.graphqlToken) {
+      throw new Error(
+        "Authentication is required for write operations. Call authenticate() first."
+      );
+    }
+
+    if (!options.id || !options.data?.engines) {
+      return false;
+    }
+
     const query = `mutation updateCharacterV2(
       $id: String!,
       $data: json!,
@@ -123,48 +233,66 @@ export class DemiplaneClient {
       }
     }`;
 
-    const result = await this.executeGraphql<{
-      updateCharacterV2: { success: boolean; message: string };
-    }>(query, {
-      id: options.id,
-      data: options.data,
-      name: options.name,
-      level: options.level,
-      classSlug: options.classSlug,
-      avatarUrl: options.avatarUrl,
-      viewPermission: options.viewPermission,
-      editPermission: options.editPermission,
-    });
+    try {
+      const result = await this.executeGraphql<{
+        updateCharacterV2: { success: boolean; message: string };
+      }>(query, {
+        id: options.id,
+        data: options.data,
+        name: options.name,
+        level: options.level,
+        classSlug: options.classSlug,
+        avatarUrl: options.avatarUrl,
+        viewPermission: options.viewPermission,
+        editPermission: options.editPermission,
+      });
 
-    return result.updateCharacterV2.success;
+      return result.updateCharacterV2.success;
+    } catch {
+      return false;
+    }
   }
 
   private async executeGraphql<T>(
     query: string,
     variables: Record<string, unknown>
   ): Promise<T> {
-    if (!this.tokens) {
-      throw new Error("Not authenticated. Call authenticate() first.");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (this.graphqlToken) {
+      headers["Authorization"] = `Bearer ${this.graphqlToken}`;
     }
 
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.tokens.graphqlToken}`,
-      },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
 
     if (!response.ok) {
-      throw new Error(`GraphQL request failed: ${String(response.status)}`);
+      throw new DemiplaneApiError(
+        response.status,
+        "GraphQL request",
+        GRAPHQL_ENDPOINT
+      );
     }
 
-    const json = (await response.json()) as { data?: T; errors?: Array<{ message: string }> };
+    let json: { data?: T; errors?: Array<{ message: string }> };
+    try {
+      json = (await response.json()) as {
+        data?: T;
+        errors?: Array<{ message: string }>;
+      };
+    } catch {
+      throw new Error(
+        "Failed to parse GraphQL response as JSON for operation: GraphQL request"
+      );
+    }
 
     if (json.errors && json.errors.length > 0) {
       throw new Error(
-        `GraphQL errors: ${json.errors.map((e) => e.message).join(", ")}`
+        `GraphQL errors: ${json.errors.map((e) => e.message).join("; ")}`
       );
     }
 

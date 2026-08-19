@@ -57,11 +57,24 @@ export function isCurriculumSpell(engine: DemiplaneEngine): boolean {
   return typeof slot === "string" && slot.includes("wizard-school-spellbook-slot");
 }
 
+export function findEnginesByNamePattern(
+  engines: CharacterEngine[],
+  pattern: RegExp
+): CharacterEngine[] {
+  return engines.filter((e) => pattern.test(e.name));
+}
+
 export function updateCustomEngineValue(
   engines: CharacterEngine[],
   storeName: string,
   value: string | number | boolean
 ): CharacterEngine[] {
+  const hasMatch = engines.some(
+    (e) => isCustomEngine(e) && e.name === storeName
+  );
+  if (!hasMatch) {
+    return engines;
+  }
   return engines.map((e) => {
     if (isCustomEngine(e) && e.name === storeName) {
       return { ...e, value };
