@@ -11,8 +11,8 @@ Tasks are ordered so that foundational library work completes before module-leve
 
 ## Tasks
 
-- [ ] 1. Refactor DemiplaneClient authentication to email/password flow
-  - [ ] 1.1 Implement email/password authenticate method replacing session-cookie auth
+- [x] 1. Refactor DemiplaneClient authentication to email/password flow
+  - [x] 1.1 Implement email/password authenticate method replacing session-cookie auth
     - Replace `authenticate(sessionCookie)` with `authenticate(email, password)`
     - Exchange credentials for a GraphQL bearer token via Demiplane's auth endpoints
     - Throw validation error if email or password is empty
@@ -21,44 +21,44 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Store token internally and attach as Bearer header on subsequent requests
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ] 1.2 Allow unauthenticated read-only access
+  - [x] 1.2 Allow unauthenticated read-only access
     - Modify `executeGraphql` to send requests without Authorization header when no token is stored
     - Ensure `fetchCharacterVersion`, `fetchCharacterData`, `fetchAttributeMapping` work without prior `authenticate()` call
     - Throw error when `updateCharacter` is called without authentication
     - _Requirements: 1.6, 1.7, 4.7_
 
-  - [ ] 1.3 Implement DemiplaneApiError class with structured error properties
+  - [x] 1.3 Implement DemiplaneApiError class with structured error properties
     - Create `DemiplaneApiError` extending `Error` with `statusCode`, `operationName`, `requestUrl` properties
     - Use this error type for all HTTP failures in the client
     - _Requirements: 14.1_
 
-  - [ ]* 1.4 Write unit tests for authentication flow
+  - [x] 1.4 Write unit tests for authentication flow
     - Mock fetch to test successful auth, HTTP failures, JSON parse failures, empty credential rejection
     - Test unauthenticated read access and write rejection
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 4.7_
     - **Commit**: `feat: Add email/password authentication to DemiplaneClient`
       - Includes tasks 1.1, 1.2, 1.3, 1.4 — auth flow, unauthenticated access, error class, and tests
 
-- [ ] 2. Implement fetchCharacterData and validation improvements
-  - [ ] 2.1 Add fetchCharacterData method to DemiplaneClient
+- [x] 2. Implement fetchCharacterData and validation improvements
+  - [x] 2.1 Add fetchCharacterData method to DemiplaneClient
     - Query character by UUID and return complete `engines` array and `engineCacheIdsBySource`
     - Throw error with character UUID when character not found
     - Throw error with joined messages when GraphQL errors array is non-empty
     - Throw error when response is missing engines array
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-  - [ ] 2.2 Add UUID format validation to character methods
+  - [x] 2.2 Add UUID format validation to character methods
     - Validate UUID format (8-4-4-4-12 hex) before sending network requests in `fetchCharacterData`, `fetchCharacterVersion`
     - Throw validation error for invalid UUID format
     - Validate nexus ID is a positive integer in `fetchAttributeMapping`
     - _Requirements: 3.3, 5.4_
 
-  - [ ] 2.3 Refine updateCharacter error handling
+  - [x] 2.3 Refine updateCharacter error handling
     - Return `false` on network error or non-200 response instead of throwing
     - Return `false` without sending request if character ID is empty or engines array is missing
     - _Requirements: 4.4, 4.6_
 
-  - [ ]* 2.4 Write unit tests for character data retrieval and validation
+  - [x] 2.4 Write unit tests for character data retrieval and validation
     - Test fetchCharacterData success, not-found, GraphQL errors, invalid structure
     - Test UUID format validation rejection
     - Test updateCharacter error handling returns false
@@ -66,17 +66,17 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add fetchCharacterData with UUID validation and error handling`
       - Includes tasks 2.1, 2.2, 2.3, 2.4 — character data retrieval, validation, error handling, and tests
 
-- [ ] 3. Extend engine utilities with findEnginesByNamePattern
-  - [ ] 3.1 Add findEnginesByNamePattern function
+- [x] 3. Extend engine utilities with findEnginesByNamePattern
+  - [x] 3.1 Add findEnginesByNamePattern function
     - Accept a RegExp pattern and return all Engine_Entry objects whose `name` field matches
     - Return empty array when no entries match
     - _Requirements: 6.5_
 
-  - [ ] 3.2 Fix updateCustomEngineValue to return same reference when no match
+  - [x] 3.2 Fix updateCustomEngineValue to return same reference when no match
     - When store name doesn't match any Custom_Engine, return the original array (same reference) instead of a mapped copy
     - _Requirements: 7.4_
 
-  - [ ]* 3.3 Write property tests for engine utilities (Properties 1, 2, 5, 6, 7, 8)
+  - [x] 3.3 Write property tests for engine utilities (Properties 1, 2, 5, 6, 7, 8)
     - Install fast-check as devDependency
     - **Property 1: Custom engine value update round-trip**
     - **Validates: Requirements 7.5**
@@ -98,7 +98,7 @@ Tasks are ordered so that foundational library work completes before module-leve
   - Push branch to remote: `git push -u origin feat/demiplane-foundry-sync`
 
 - [ ] 5. Implement SlugMapper in the Foundry module
-  - [ ] 5.1 Create SlugMapper class with slug transformation and compendium resolution
+  - [x] 5.1 Create SlugMapper class with slug transformation and compendium resolution
     - Strip trailing `-rm` suffix from slugs when present
     - Pass non-rm slugs unchanged
     - Search compendium packs in defined order: `pf2e.classes`, `pf2e.ancestries`, `pf2e.heritages`, `pf2e.backgrounds`, `pf2e.feats-srd`, `pf2e.spells-srd`, `pf2e.equipment-srd`, `pf2e.classfeatures`
@@ -107,7 +107,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Log info when duplicate slug found across packs
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ]* 5.2 Write unit and property tests for SlugMapper (Properties 3, 4)
+  - [ ] 5.2 Write unit and property tests for SlugMapper (Properties 3, 4)
     - Mock Foundry compendium pack indexes
     - **Property 3: Slug transformation is idempotent on non-rm slugs**
     - **Validates: Requirements 8.2**
@@ -116,14 +116,14 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add SlugMapper with compendium resolution`
       - Includes tasks 5.1, 5.2 — slug transformation, compendium search, and tests
 
-- [ ] 6. Implement CharacterLinkInput utility and module settings
-  - [ ] 6.1 Create parseCharacterLinkInput function
+- [x] 6. Implement CharacterLinkInput utility and module settings
+  - [x] 6.1 Create parseCharacterLinkInput function
     - Trim whitespace, extract UUID from full Demiplane URL or accept bare UUID
     - Validate UUID format (8-4-4-4-12 hex, case-insensitive)
     - Return `{ valid: true, uuid }` or `{ valid: false, error }` with expected format description
     - _Requirements: 12.3, 12.4, 12.6, 12.7_
 
-  - [ ] 6.2 Update module settings registration
+  - [x] 6.2 Update module settings registration
     - Replace session cookie setting with `demiplaneEmail` (string, scope: client) and `demiplanePassword` (password type, scope: client)
     - Keep `autoSync` boolean setting (scope: world)
     - Add `dryRun` boolean setting (scope: world, default: false)
@@ -131,7 +131,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - **Commit**: `feat: Add module settings for email/password and dry run`
       - Includes task 6.2 — settings registration
 
-  - [ ]* 6.3 Write unit and property tests for parseCharacterLinkInput (Properties 11, 12, 13)
+  - [x] 6.3 Write unit and property tests for parseCharacterLinkInput (Properties 11, 12, 13)
     - **Property 11: Character link input round-trip for bare UUIDs**
     - **Validates: Requirements 12.3, 12.6**
     - **Property 12: Character link input extracts UUID from valid URL**
@@ -155,7 +155,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Return ImportSummary with itemsImported, itemsSkipped, errors counts
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 14.2, 14.3_
 
-  - [ ]* 7.4 Write unit tests for ImportOrchestrator
+  - [ ] 7.4 Write unit tests for ImportOrchestrator
     - Mock DemiplaneClient and Foundry actor API
     - Verify correct ordering of createEmbeddedDocuments calls
     - Test reconciliation logic, unresolved slug handling, dry run mode
@@ -190,7 +190,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Display ui.notifications.error and retain pending changes after all retries fail
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.8_
 
-  - [ ]* 8.3 Write unit and property tests for ExportManager (Properties 9, 10)
+  - [ ] 8.3 Write unit and property tests for ExportManager (Properties 9, 10)
     - Use fake timers to test debounce collapsing and rate limiting
     - **Property 9: Debounce batching collapses rapid changes**
     - **Validates: Requirements 10.3**
@@ -217,7 +217,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - For "cancel": abort push, leave both sides unchanged, retain pending changes
     - _Requirements: 10.5, 10.6, 10.7, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-  - [ ]* 9.2 Write unit tests for ConflictResolver
+  - [ ] 9.2 Write unit tests for ConflictResolver
     - Test version comparison, conflict detection, each resolution strategy
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
     - **Commit**: `feat: Add ConflictResolver with version comparison and strategies`
@@ -236,7 +236,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Map currency changes to corresponding store names
     - _Requirements: 10.1, 10.2, 10.9_
 
-  - [ ]* 11.2 Write unit tests for HookManager
+  - [ ] 11.2 Write unit tests for HookManager
     - Mock ExportManager and verify correct queueChange calls for various actor/item changes
     - Test filtering of non-character actors and unlinked actors
     - _Requirements: 10.1, 10.2_
@@ -254,7 +254,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Render "Import from Demiplane" / "Push to Demiplane" action buttons
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.11_
 
-  - [ ]* 12.4 Write unit tests for SyncTabRenderer
+  - [ ] 12.4 Write unit tests for SyncTabRenderer
     - Test tab renders only for linked actors
     - Test correct display of status, pending changes, issues, summary
     - Test button label changes in dry run mode
@@ -292,7 +292,7 @@ Tasks are ordered so that foundational library work completes before module-leve
     - Read `dryRun` setting and pass to operations
     - _Requirements: 12.1, 12.2, 15.8, 15.9, 18.6_
 
-  - [ ]* 13.2 Write property test for dry run observational guarantee (Property 14)
+  - [ ] 13.2 Write property test for dry run observational guarantee (Property 14)
     - **Property 14: Dry run mode is purely observational**
     - **Validates: Requirements 18.1, 18.3, 18.4, 18.5**
     - Use mock actor and spy on DemiplaneClient to verify no mutations sent

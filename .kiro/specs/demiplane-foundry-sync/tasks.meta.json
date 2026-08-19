@@ -1,0 +1,468 @@
+{
+  "pbtResults": {
+    "3.3 Write property tests for engine utilities (Properties 1, 2, 5, 6, 7, 8)": {
+      "status": "passed",
+      "lastRunTimestamp": 1787151467654
+    },
+    "6.3 Write unit and property tests for parseCharacterLinkInput (Properties 11, 12, 13)": {
+      "status": "passed",
+      "lastRunTimestamp": 1787151632021
+    }
+  },
+  "executionHistory": {
+    "1.1 Implement email/password authenticate method replacing session-cookie auth": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647046
+      },
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150663223
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150743917
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151051693
+      }
+    ],
+    "1.2 Allow unauthenticated read-only access": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647105
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151063443
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151261887
+      }
+    ],
+    "1.3 Implement DemiplaneApiError class with structured error properties": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647133
+      },
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150664026
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150744752
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151052552
+      }
+    ],
+    "2.1 Add fetchCharacterData method to DemiplaneClient": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647157
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151064266
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151262712
+      }
+    ],
+    "2.2 Add UUID format validation to character methods": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647181
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151287838
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151666037
+      }
+    ],
+    "2.3 Refine updateCharacter error handling": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647204
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151288630
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151667096
+      }
+    ],
+    "3.1 Add findEnginesByNamePattern function": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647229
+      },
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150664897
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150745586
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151053486
+      }
+    ],
+    "3.2 Fix updateCustomEngineValue to return same reference when no match": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647261
+      },
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150665703
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150746356
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151054288
+      }
+    ],
+    "4. Checkpoint - Ensure all demiplane-api tests pass": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647285
+      }
+    ],
+    "5.1 Create SlugMapper class with slug transformation and compendium resolution": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647308
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151679552
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151936492
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152070806
+      }
+    ],
+    "6.1 Create parseCharacterLinkInput function": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647330
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151064924
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151263553
+      }
+    ],
+    "6.2 Update module settings registration": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647353
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151065751
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151264339
+      }
+    ],
+    "7.1 Create ImportOrchestrator class with full import pipeline": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647374
+      }
+    ],
+    "7.2 Implement attribute boost and skill training import logic": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647395
+      }
+    ],
+    "7.3 Implement dry run mode for import": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647419
+      }
+    ],
+    "8.1 Create ExportManager class with queueChange and flush": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647441
+      }
+    ],
+    "8.2 Implement dry run mode for export": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647484
+      }
+    ],
+    "9.1 Create ConflictResolver class": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647506
+      }
+    ],
+    "10. Checkpoint - Ensure all module core logic tests pass": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647530
+      }
+    ],
+    "11.1 Refactor hooks.ts into HookManager class": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647555
+      }
+    ],
+    "12.1 Create SyncTabRenderer class": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647587
+      }
+    ],
+    "12.2 Implement dry run UI indicators and dynamic labels": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647610
+      }
+    ],
+    "12.3 Implement per-actor character link dialog": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647631
+      }
+    ],
+    "13.1 Update module.ts to instantiate and connect all components": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647652
+      }
+    ],
+    "14. Checkpoint - Ensure all Foundry module tests pass": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647672
+      }
+    ],
+    "15.1 Write demiplane-api README": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647694
+      }
+    ],
+    "15.2 Add JSDoc comments to all exported symbols in demiplane-api": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647728
+      }
+    ],
+    "15.3 Write foundry-demiplane-pf2e user README": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647750
+      }
+    ],
+    "15.4 Write docs/ARCHITECTURE.md for Foundry module": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647772
+      }
+    ],
+    "15.5 Write docs/DESIGN.md for Foundry module": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647793
+      }
+    ],
+    "15.6 Write docs/CONTRIBUTING.md for Foundry module": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647814
+      }
+    ],
+    "16.1 Create integration test scaffolding with Foundry Node CLI management": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647837
+      }
+    ],
+    "16.2 Implement Valeros import validation tests (levels 1, 3, 5)": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647860
+      }
+    ],
+    "17. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f1c6bf57-6840-40e4-973c-e570bc7eccc5",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787150647883
+      }
+    ],
+    "3. Extend engine utilities with findEnginesByNamePattern": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151054327
+      }
+    ],
+    "1. Refactor DemiplaneClient authentication to email/password flow": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151261931
+      }
+    ],
+    "6. Implement CharacterLinkInput utility and module settings": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151264380
+      }
+    ],
+    "1.4 Write unit tests for authentication flow": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151287045
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151665274
+      }
+    ],
+    "3.3 Write property tests for engine utilities (Properties 1, 2, 5, 6, 7, 8)": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151289554
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151668162
+      }
+    ],
+    "6.3 Write unit and property tests for parseCharacterLinkInput (Properties 11, 12, 13)": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151290556
+      },
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151669281
+      }
+    ],
+    "2.4 Write unit tests for character data retrieval and validation": [
+      {
+        "executionId": "a5e54df0-2fd4-44c9-a045-9146e9075a1a",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151678782
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787151935686
+      },
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152071661
+      }
+    ],
+    "2. Implement fetchCharacterData and validation improvements": [
+      {
+        "executionId": "9e8f6678-a5f6-4837-aef0-6af585705fc7",
+        "chatSessionId": "sess_da018d8d-77fd-46e7-9ffa-80167b72900b",
+        "timestamp": 1787152071705
+      }
+    ]
+  }
+}

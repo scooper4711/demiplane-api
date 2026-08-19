@@ -9,6 +9,24 @@ describe("DemiplaneClient", () => {
     fetchSpy = vi.spyOn(globalThis, "fetch");
   });
 
+  async function createAuthenticatedClient(): Promise<DemiplaneClient> {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ sessionToken: "tok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ token: "gql-tok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    const client = new DemiplaneClient();
+    await client.authenticate("user@test.com", "pass");
+    return client;
+  }
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -220,6 +238,207 @@ describe("DemiplaneClient", () => {
       );
       expect(error.name).toBe("DemiplaneApiError");
       expect(error.message).toBe("character fetch failed with status 404");
+    });
+  });
+
+  describe("fetchCharacterData", () => {
+    it("returns character data on success", async () => {
+      const client = new DemiplaneClient();
+      const mockData = {
+        engines: [
+          {
+            id: "1",
+            name: "test",
+            type: "CustomDemiplaneEngine",
+            value: 10,
+            saveType: "CharacterSheet",
+            storeType: "override",
+            demiplaneEngineId: "e1",
+            args: { id: null },
+          },
+        ],
+        engineCacheIdsBySource: { source1: ["id1"] },
+      };
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { demiplane_user_character: [{ data: mockData }] },
+          }),
+          { status: 200 }
+        )
+      );
+      const result = await client.fetchCharacterData(
+        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      );
+      expect(result.engines).toHaveLength(1);
+      expect(result.engineCacheIdsBySource).toEqual({ source1: ["id1"] });
+    });
+
+    it("throws when character not found", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { demiplane_user_character: [] },
+          }),
+          { status: 200 }
+        )
+      );
+      await expect(
+        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+      ).rejects.toThrow("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+    });
+
+    it("throws when response has GraphQL errors", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: null,
+            errors: [{ message: "err1" }, { message: "err2" }],
+          }),
+          { status: 200 }
+        )
+      );
+      await expect(
+        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+      ).rejects.toThrow("err1; err2");
+    });
+
+    it("throws when engines array is missing", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              demiplane_user_character: [
+                { data: { engineCacheIdsBySource: {} } },
+              ],
+            },
+          }),
+          { status: 200 }
+        )
+      );
+      await expect(
+        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+      ).rejects.toThrow("missing engines array");
+    });
+  });
+
+  describe("UUID validation", () => {
+    it("fetchCharacterData throws for invalid UUID", async () => {
+      const client = new DemiplaneClient();
+      await expect(client.fetchCharacterData("not-a-uuid")).rejects.toThrow(
+        "Invalid UUID format"
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("fetchCharacterVersion throws for invalid UUID", async () => {
+      const client = new DemiplaneClient();
+      await expect(client.fetchCharacterVersion("bad")).rejects.toThrow(
+        "Invalid UUID format"
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Nexus ID validation", () => {
+    it("fetchAttributeMapping throws for zero", async () => {
+      const client = new DemiplaneClient();
+      await expect(client.fetchAttributeMapping(0)).rejects.toThrow(
+        "Invalid nexus ID"
+      );
+    });
+
+    it("fetchAttributeMapping throws for negative", async () => {
+      const client = new DemiplaneClient();
+      await expect(client.fetchAttributeMapping(-1)).rejects.toThrow(
+        "Invalid nexus ID"
+      );
+    });
+
+    it("fetchAttributeMapping throws for non-integer", async () => {
+      const client = new DemiplaneClient();
+      await expect(client.fetchAttributeMapping(1.5)).rejects.toThrow(
+        "Invalid nexus ID"
+      );
+    });
+  });
+
+  describe("updateCharacter error handling", () => {
+    it("returns false when id is empty", async () => {
+      const client = await createAuthenticatedClient();
+      const result = await client.updateCharacter({
+        id: "",
+        data: { engines: [], engineCacheIdsBySource: {} },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false when engines is missing from data", async () => {
+      const client = await createAuthenticatedClient();
+      const result = await client.updateCharacter({
+        id: "some-id",
+        data: {} as any,
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false on network error", async () => {
+      const client = await createAuthenticatedClient();
+      fetchSpy.mockRejectedValueOnce(new Error("network failure"));
+      const result = await client.updateCharacter({
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        data: { engines: [], engineCacheIdsBySource: {} },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false on non-200 response", async () => {
+      const client = await createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(new Response(null, { status: 500 }));
+      const result = await client.updateCharacter({
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        data: { engines: [], engineCacheIdsBySource: {} },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns true when mutation succeeds", async () => {
+      const client = await createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { updateCharacterV2: { success: true, message: "ok" } },
+          }),
+          { status: 200 }
+        )
+      );
+      const result = await client.updateCharacter({
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        data: { engines: [], engineCacheIdsBySource: {} },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns false when mutation returns success: false", async () => {
+      const client = await createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              updateCharacterV2: { success: false, message: "fail" },
+            },
+          }),
+          { status: 200 }
+        )
+      );
+      const result = await client.updateCharacter({
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        data: { engines: [], engineCacheIdsBySource: {} },
+      });
+      expect(result).toBe(false);
     });
   });
 });
