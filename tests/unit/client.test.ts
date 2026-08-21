@@ -367,22 +367,20 @@ describe("DemiplaneClient", () => {
   });
 
   describe("updateCharacter error handling", () => {
-    it("returns false when id is empty", async () => {
+    it("returns throw error when id is empty", async () => {
       const client = await createAuthenticatedClient();
-      const result = await client.updateCharacter({
+      await expect(client.updateCharacter({
         id: "",
         data: { engines: [], engineCacheIdsBySource: {} },
-      });
-      expect(result).toBe(false);
+      })).rejects.toThrow("Invalid UpdateCharacterOptions - please provide both id and engines");
     });
 
-    it("returns false when engines is missing from data", async () => {
+    it("throws error when engines is missing from data", async () => {
       const client = await createAuthenticatedClient();
-      const result = await client.updateCharacter({
+      await expect(client.updateCharacter({
         id: "some-id",
         data: {} as any,
-      });
-      expect(result).toBe(false);
+      })).rejects.toThrow("Invalid UpdateCharacterOptions - please provide both id and engines");
     });
 
     it("returns false on network error", async () => {
