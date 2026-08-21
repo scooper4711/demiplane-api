@@ -189,6 +189,8 @@ export class DemiplaneClient {
     }
 
     const characterData = character.data;
+    // Runtime validation for JS callers who bypass TypeScript's type system
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!characterData.engines || !Array.isArray(characterData.engines)) {
       throw new Error(
         `Invalid response structure: character ${characterId} is missing engines array`
@@ -291,8 +293,12 @@ export class DemiplaneClient {
       );
     }
 
+    // Runtime validation for JS callers who bypass TypeScript's type system
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!options.id || !options.data?.engines) {
-      return false;
+      throw new Error(
+        "Invalid UpdateCharacterOptions - please provide both id and engines"
+      );
     }
 
     const query = `mutation updateCharacterV2(
