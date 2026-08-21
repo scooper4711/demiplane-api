@@ -29,16 +29,8 @@ export interface EngineArgs {
   tableID?: string;
   /** Group key used for mutually exclusive selections. */
   selectionGroup?: string;
-  /** Identifier for the spell slot this engine occupies. */
-  spellSlot?: string;
   /** Numeric rank within a selection group. */
   selectionRank?: number;
-  /** Reference to the parent spell feature engine. */
-  parentSpellFeature?: string;
-  /** Whether this engine represents a prepared spell. */
-  isPrepare?: boolean;
-  /** Additional spell data for spellbook entries. */
-  addSpellData?: { baseSpellbookSpell: boolean };
   /** Allows additional arbitrary properties. */
   [key: string]: unknown;
 }

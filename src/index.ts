@@ -14,10 +14,6 @@ export {
   isDemiplaneEngine,
   findCustomEngineByName,
   findEnginesBySlug,
-  findSpellEngines,
-  findSpellbookSpells,
-  findPreparedSpells,
-  isCurriculumSpell,
   findEnginesByNamePattern,
   updateCustomEngineValue,
 } from "./engines.js";

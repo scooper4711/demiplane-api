@@ -183,22 +183,6 @@ const spells = findEnginesByNamePattern(data.engines, /^tabula\/spell\//);
 const boosts = findEnginesByNamePattern(data.engines, /attribute\/boost/);
 ```
 
-#### `findSpellEngines(engines): DemiplaneEngine[]`
-
-Find all engines with names starting with `tabula/spell/`.
-
-#### `findSpellbookSpells(engines): DemiplaneEngine[]`
-
-Find spell engines that are base spellbook spells.
-
-#### `findPreparedSpells(engines): DemiplaneEngine[]`
-
-Find spell engines marked as prepared.
-
-#### `isCurriculumSpell(engine): boolean`
-
-Check if a spell engine is a wizard school curriculum spell.
-
 #### `updateCustomEngineValue(engines, storeName, value): CharacterEngine[]`
 
 Immutably update a custom engine's value. Returns a new array with the matching engine replaced. Non-matching engines are preserved by reference (not cloned). If the store name doesn't exist, returns the original array (same reference).
@@ -255,18 +239,13 @@ try {
 
 ## Architecture
 
-```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────────────┐
-│   Your Code     │────────▶│  DemiplaneClient │────────▶│  Demiplane GraphQL API  │
-│  (caller)       │◀────────│                  │◀────────│  (apiv4.demiplane.com)  │
-└─────────────────┘         └──────────────────┘         └─────────────────────────┘
-                                     │
-                                     │ uses
-                                     ▼
-                            ┌──────────────────┐
-                            │ Engine Utilities  │
-                            │ (pure functions) │
-                            └──────────────────┘
+```mermaid
+graph LR
+    A[Your Code] --> B[DemiplaneClient]
+    B --> C[Demiplane GraphQL API<br>apiv4.demiplane.com]
+    C --> B
+    B --> A
+    B --> D[Engine Utilities<br>pure functions]
 ```
 
 ### Data Flow
@@ -309,17 +288,69 @@ Characters in Demiplane are represented as an array of "engines" — each engine
 
 This library is designed to be consumed by game-system-specific integrations. It handles the Demiplane communication layer while leaving all game-specific logic to the consumer.
 
+### Extending EngineArgs for Your Game System
+
+The `EngineArgs` interface uses an index signature (`[key: string]: unknown`) so that game-specific properties are accessible without casting. When building a system-specific integration, define a local interface that narrows those args to the properties your system uses.
+
+Here's a real example from a PF2e integration that adds spell-related utilities on top of this library:
+
+```typescript
+import type { CharacterEngine, DemiplaneEngine } from "@scooper4711/demiplane-api";
+import { isDemiplaneEngine } from "@scooper4711/demiplane-api";
+
+/**
+ * PF2e-specific engine args for spell entries.
+ */
+interface Pf2eSpellEngineArgs {
+  spellSlot?: string;
+  parentSpellFeature?: string;
+  isPrepare?: boolean;
+  addSpellData?: { baseSpellbookSpell: boolean };
+}
+
+function findSpellEngines(engines: CharacterEngine[]): DemiplaneEngine[] {
+  return engines.filter(
+    (e): e is DemiplaneEngine =>
+      isDemiplaneEngine(e) && e.name.startsWith("tabula/spell/")
+  );
+}
+
+function findSpellbookSpells(engines: CharacterEngine[]): DemiplaneEngine[] {
+  return findSpellEngines(engines).filter((e) => {
+    const args = e.args as Pf2eSpellEngineArgs;
+    return args.addSpellData?.baseSpellbookSpell === true;
+  });
+}
+
+function findPreparedSpells(engines: CharacterEngine[]): DemiplaneEngine[] {
+  return findSpellEngines(engines).filter((e) => {
+    const args = e.args as Pf2eSpellEngineArgs;
+    return args.isPrepare === true;
+  });
+}
+
+function isCurriculumSpell(engine: DemiplaneEngine): boolean {
+  const args = engine.args as Pf2eSpellEngineArgs;
+  const slot = args.spellSlot;
+  return typeof slot === "string" && slot.includes("wizard-school-spellbook-slot");
+}
+```
+
+This pattern keeps the core library system-agnostic while letting each integration define typed accessors for the args properties its game system uses.
+
 ### Building an Integration for Another Game System
 
 To build a sync integration for a different Demiplane-supported game system (D&D 5e, Marvel Multiverse, etc.), you would:
 
 1. **Use `DemiplaneClient`** for all API communication — authentication, fetching character data, pushing updates. This works identically regardless of game system.
 
-2. **Build your own slug mapper** that translates Demiplane engine slugs into your target system's item identifiers. Each game system has its own slug conventions.
+2. **Define your own typed args interface** that narrows `EngineArgs` to the properties your system uses (as shown above).
 
-3. **Build your own actor/character translator** that reads the engines array and populates your target system's data model. The engine utilities (`findEnginesBySlug`, `findEnginesByNamePattern`, `findCustomEngineByName`) help you query the data without worrying about the raw structure.
+3. **Build your own slug mapper** that translates Demiplane engine slugs into your target system's item identifiers. Each game system has its own slug conventions.
 
-4. **Use `updateCustomEngineValue`** to modify session state values before pushing them back to Demiplane.
+4. **Build your own actor/character translator** that reads the engines array and populates your target system's data model. The engine utilities (`findEnginesBySlug`, `findEnginesByNamePattern`, `findCustomEngineByName`) help you query the data without worrying about the raw structure.
+
+5. **Use `updateCustomEngineValue`** to modify session state values before pushing them back to Demiplane.
 
 ### Example: Hypothetical D&D 5e Integration
 
@@ -360,6 +391,7 @@ const currentHp = findCustomEngineByName(
 | Immutable engine value updates      | Actor/character population logic          |
 | Character version checking          | Conflict resolution UI                    |
 | Attribute mapping retrieval         | Platform-specific session state detection |
+| —                                   | System-specific engine arg types          |
 
 ## Types
 
@@ -377,9 +409,9 @@ import type {
 } from "@scooper4711/demiplane-api";
 ```
 
-## Common Session State Store Names (PF2e)
+## Common Session State Store Names
 
-These store names are used in Pathfinder 2e characters for session state values:
+Store names vary by game system. Use `fetchAttributeMapping` to discover them programmatically for any nexus. Here are some examples from Pathfinder 2e (nexus ID 28):
 
 | Store Name                     | Type   | Description          |
 | ------------------------------ | ------ | -------------------- |
@@ -391,8 +423,6 @@ These store names are used in Pathfinder 2e characters for session state values:
 | `character_currency_silver`    | number | Silver pieces        |
 | `character_currency_copper`    | number | Copper pieces        |
 | `character_currency_platinum`  | number | Platinum pieces      |
-
-Other game systems will have their own store names — use `fetchAttributeMapping` to discover them programmatically.
 
 ## License
 

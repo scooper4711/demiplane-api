@@ -52,55 +52,6 @@ export function findEnginesBySlug(
 }
 
 /**
- * Finds all spell-related engines by matching names that start with "tabula/spell/".
- * @param engines - The array of character engines to search.
- * @returns An array of {@link DemiplaneEngine} entries representing spells.
- */
-export function findSpellEngines(engines: CharacterEngine[]): DemiplaneEngine[] {
-  return engines.filter(
-    (e): e is DemiplaneEngine =>
-      isDemiplaneEngine(e) && e.name.startsWith("tabula/spell/")
-  );
-}
-
-/**
- * Finds all spellbook spell engines (spells marked as base spellbook entries).
- * @param engines - The array of character engines to search.
- * @returns An array of {@link DemiplaneEngine} entries that are base spellbook spells.
- */
-export function findSpellbookSpells(
-  engines: CharacterEngine[]
-): DemiplaneEngine[] {
-  return findSpellEngines(engines).filter(
-    (e) => e.args.addSpellData?.baseSpellbookSpell === true
-  );
-}
-
-/**
- * Finds all prepared spell engines.
- * @param engines - The array of character engines to search.
- * @returns An array of {@link DemiplaneEngine} entries marked as prepared spells.
- */
-export function findPreparedSpells(
-  engines: CharacterEngine[]
-): DemiplaneEngine[] {
-  return findSpellEngines(engines).filter(
-    (e) => e.args.isPrepare === true
-  );
-}
-
-/**
- * Checks whether a spell engine represents a curriculum (wizard school) spell
- * by inspecting its spell slot identifier.
- * @param engine - The Demiplane spell engine to check.
- * @returns `true` if the engine's spell slot contains "wizard-school-spellbook-slot".
- */
-export function isCurriculumSpell(engine: DemiplaneEngine): boolean {
-  const slot = engine.args.spellSlot;
-  return typeof slot === "string" && slot.includes("wizard-school-spellbook-slot");
-}
-
-/**
  * Finds all engines whose name matches a regular expression pattern.
  * @param engines - The array of character engines to search.
  * @param pattern - The regular expression to test against engine names.

@@ -3,7 +3,6 @@ import {
   isCustomEngine,
   isDemiplaneEngine,
   findCustomEngineByName,
-  isCurriculumSpell,
   updateCustomEngineValue,
 } from "./engines.js";
 import type { CharacterEngine, CustomEngine, DemiplaneEngine } from "./types.js";
@@ -28,21 +27,6 @@ const mockDemiplaneEngine: DemiplaneEngine = {
   args: {
     id: "selection-uuid",
     slug: "fireball-rm",
-    spellSlot: "rank-3-wizard-school-spellbook-slot",
-    selectionRank: 3,
-  },
-};
-
-const mockRegularSpell: DemiplaneEngine = {
-  id: "spell-id-2",
-  demiplaneEngineId: "engine-uuid-2",
-  name: "tabula/spell/haste-rm.eng",
-  type: "DemiplaneEngine",
-  saveType: "CharacterSheet",
-  args: {
-    id: "selection-uuid-2",
-    slug: "haste-rm",
-    spellSlot: "rank-3",
     selectionRank: 3,
   },
 };
@@ -78,16 +62,6 @@ describe("findCustomEngineByName", () => {
     const engines: CharacterEngine[] = [mockDemiplaneEngine];
     const result = findCustomEngineByName(engines, "nonexistent");
     expect(result).toBeUndefined();
-  });
-});
-
-describe("isCurriculumSpell", () => {
-  it("returns true for wizard school spellbook slot", () => {
-    expect(isCurriculumSpell(mockDemiplaneEngine)).toBe(true);
-  });
-
-  it("returns false for regular spell slot", () => {
-    expect(isCurriculumSpell(mockRegularSpell)).toBe(false);
   });
 });
 
