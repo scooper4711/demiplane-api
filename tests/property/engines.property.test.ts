@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import * as fc from "fast-check";
 import {
   isCustomEngine,
@@ -41,7 +41,7 @@ const demiplaneEngineArb: fc.Arbitrary<DemiplaneEngine> = fc.record({
   ),
   args: fc.record({
     id: fc.option(fc.uuid(), { nil: null }),
-    slug: fc.option(fc.string({ minLength: 1 }), { nil: undefined }),
+    slug: fc.string({ minLength: 1}),
   }),
 });
 
