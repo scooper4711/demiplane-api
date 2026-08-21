@@ -11,7 +11,9 @@ export default defineConfig({
   ignores: ["dist/", "node_modules/", "coverage/"],
   languageOptions: {
     parserOptions: {
-      projectService: true,
+      projectService: {
+        allowDefaultProject: ["eslint.config.ts"],
+      },
       tsconfigRootDir: import.meta.dirname
     },
   },
