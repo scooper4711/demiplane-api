@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { DemiplaneClient } from "../../src/client.js";
 import { DemiplaneApiError } from "../../src/errors.js";
 
 describe("DemiplaneClient", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance<typeof fetch>;
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(globalThis, "fetch");
@@ -172,7 +172,7 @@ describe("DemiplaneClient", () => {
       await client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 
       const graphqlCall = fetchSpy.mock.calls[2];
-      const requestInit = graphqlCall[1] as RequestInit;
+      const requestInit = graphqlCall![1] as RequestInit;
       const headers = requestInit.headers as Record<string, string>;
       expect(headers["Authorization"]).toBe("Bearer graphql-token-xyz");
     });
@@ -199,7 +199,7 @@ describe("DemiplaneClient", () => {
       expect(result).toEqual({ uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 5 });
 
       // Verify no Authorization header was sent
-      const requestInit = fetchSpy.mock.calls[0][1] as RequestInit;
+      const requestInit = fetchSpy.mock.calls[0]![1] as RequestInit;
       const headers = requestInit.headers as Record<string, string>;
       expect(headers["Authorization"]).toBeUndefined();
     });
@@ -367,7 +367,7 @@ describe("DemiplaneClient", () => {
   });
 
   describe("updateCharacter error handling", () => {
-    it("returns throw error when id is empty", async () => {
+    it("throws error when id is empty", async () => {
       const client = await createAuthenticatedClient();
       await expect(client.updateCharacter({
         id: "",
