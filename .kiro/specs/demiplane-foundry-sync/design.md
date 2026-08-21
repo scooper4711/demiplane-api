@@ -9,6 +9,7 @@ This design describes a two-package system enabling bidirectional character sync
 2. **`foundry-demiplane-pf2e`** — A Foundry VTT module that consumes the NPM library to perform bidirectional sync. It owns all PF2e-specific logic: slug mapping, compendium resolution, Grant Chain orchestration, actor population, session state export, conflict detection, and the actor sheet Sync tab UI.
 
 **Data flow direction:**
+
 - **Import (Demiplane → Foundry):** Character build data flows through the API client, gets translated by the Slug Mapper into compendium items, and is added to a Foundry actor via `createEmbeddedDocuments` to trigger the PF2e Grant Chain.
 - **Export (Foundry → Demiplane):** Session state changes (HP, currency, hero points, focus points) are captured by Foundry hooks, debounced, conflict-checked, and pushed back via the `updateCharacterV2` mutation.
 
@@ -59,13 +60,13 @@ This boundary enables future modules for other game systems (D&D 5e, Marvel Mult
 
 ### Key Architectural Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| Populate existing actors, not create new ones | Players already have actors with tokens, permissions, and journal links. Creating new actors would break these associations. |
-| Sequential `createEmbeddedDocuments` for ancestry/heritage/background/class | The PF2e Grant Chain cascades features when these items are added. Ordering ensures prerequisites are satisfied. |
-| Debounce + rate limit for export | Prevents flooding Demiplane's API during rapid gameplay changes (combat HP fluctuations). |
-| Version-based conflict detection | The character `version` integer monotonically increases. Comparing local vs remote version is a reliable conflict signal. |
-| Email/password auth instead of session cookie | Simplifies credential management for end users — no browser extension or cookie extraction needed. |
+| Decision                                                                    | Rationale                                                                                                                    |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Populate existing actors, not create new ones                               | Players already have actors with tokens, permissions, and journal links. Creating new actors would break these associations. |
+| Sequential `createEmbeddedDocuments` for ancestry/heritage/background/class | The PF2e Grant Chain cascades features when these items are added. Ordering ensures prerequisites are satisfied.             |
+| Debounce + rate limit for export                                            | Prevents flooding Demiplane's API during rapid gameplay changes (combat HP fluctuations).                                    |
+| Version-based conflict detection                                            | The character `version` integer monotonically increases. Comparing local vs remote version is a reliable conflict signal.    |
+| Email/password auth instead of session cookie                               | Simplifies credential management for end users — no browser extension or cookie extraction needed.                           |
 
 ## Components and Interfaces
 
@@ -86,6 +87,7 @@ class DemiplaneClient {
 ```
 
 **Changes from current implementation:**
+
 - `authenticate()` switches from session-cookie-based auth to email/password credentials (per Requirement 1). Internally performs the credential exchange to obtain a GraphQL bearer token.
 - `fetchCharacterData()` is new — fetches the complete `engines` array and `engineCacheIdsBySource` for a character UUID.
 - All methods become usable without authentication for read-only operations on public characters. Write operations require prior authentication.
@@ -100,12 +102,25 @@ function isCustomEngine(engine: CharacterEngine): engine is CustomEngine;
 function isDemiplaneEngine(engine: CharacterEngine): engine is DemiplaneEngine;
 
 // Querying
-function findCustomEngineByName(engines: CharacterEngine[], storeName: string): CustomEngine | undefined;
-function findEnginesBySlug(engines: CharacterEngine[], slug: string): DemiplaneEngine[];
-function findEnginesByNamePattern(engines: CharacterEngine[], pattern: RegExp): CharacterEngine[];
+function findCustomEngineByName(
+  engines: CharacterEngine[],
+  storeName: string
+): CustomEngine | undefined;
+function findEnginesBySlug(
+  engines: CharacterEngine[],
+  slug: string
+): DemiplaneEngine[];
+function findEnginesByNamePattern(
+  engines: CharacterEngine[],
+  pattern: RegExp
+): CharacterEngine[];
 
 // Immutable updates
-function updateCustomEngineValue(engines: CharacterEngine[], storeName: string, value: string | number | boolean): CharacterEngine[];
+function updateCustomEngineValue(
+  engines: CharacterEngine[],
+  storeName: string,
+  value: string | number | boolean
+): CharacterEngine[];
 ```
 
 **New addition:** `findEnginesByNamePattern` to support Requirement 6.5.
@@ -140,6 +155,7 @@ interface ResolvedItem {
 ```
 
 **Transformation rules:**
+
 1. If slug ends with `-rm`, strip the suffix.
 2. Otherwise, pass unchanged.
 3. Search indexed compendium packs for `system.slug === derivedSlug`.
@@ -152,23 +168,28 @@ Coordinates a full character import from Demiplane into a Foundry actor.
 
 ```typescript
 interface ImportOptions {
-  dryRun?: boolean;  // When true, run pipeline without writes
+  dryRun?: boolean; // When true, run pipeline without writes
 }
 
 class ImportOrchestrator {
   constructor(client: DemiplaneClient, slugMapper: SlugMapper);
-  importCharacter(actor: Actor, characterId: string, options?: ImportOptions): Promise<ImportSummary>;
+  importCharacter(
+    actor: Actor,
+    characterId: string,
+    options?: ImportOptions
+  ): Promise<ImportSummary>;
 }
 
 interface ImportSummary {
   itemsImported: number;
   itemsSkipped: number;
   errors: string[];
-  preview: boolean;   // true when generated via dry run
+  preview: boolean; // true when generated via dry run
 }
 ```
 
 **Import sequence:**
+
 1. Fetch character data via `DemiplaneClient.fetchCharacterData()`
 2. Extract character name, level from Custom_Engines
 3. Clear existing items from previous import (reconciliation)
@@ -179,7 +200,7 @@ interface ImportSummary {
 8. Store version number in actor flags
 
 **Dry run behavior (when `options.dryRun` is true):**
-Steps 1–2 execute normally (read-only). Step 3 computes the reconciliation diff but does not call `deleteEmbeddedDocuments`. Steps 4–6 resolve slugs and build the item list but skip all `createEmbeddedDocuments` calls. Steps 7–8 are skipped entirely. The returned `ImportSummary` reflects what *would* happen, with `preview: true`.
+Steps 1–2 execute normally (read-only). Step 3 computes the reconciliation diff but does not call `deleteEmbeddedDocuments`. Steps 4–6 resolve slugs and build the item list but skip all `createEmbeddedDocuments` calls. Steps 7–8 are skipped entirely. The returned `ImportSummary` reflects what _would_ happen, with `preview: true`.
 
 #### ExportManager (class)
 
@@ -187,7 +208,7 @@ Handles debounced session state export from Foundry to Demiplane.
 
 ```typescript
 interface ExportOptions {
-  dryRun?: boolean;  // When true, collect changes without pushing
+  dryRun?: boolean; // When true, collect changes without pushing
 }
 
 class ExportManager {
@@ -201,11 +222,12 @@ interface ExportResult {
   newVersion?: number;
   error?: string;
   conflictDetected?: boolean;
-  preview?: PendingChange[];  // populated when dryRun is true
+  preview?: PendingChange[]; // populated when dryRun is true
 }
 ```
 
 **Behavior:**
+
 - `queueChange` accumulates field changes and resets the 2-second debounce timer.
 - After the debounce window, it triggers a flush.
 - Flush performs conflict detection, then pushes changes.
@@ -213,7 +235,7 @@ interface ExportResult {
 - On failure, retries up to 3 times with exponential backoff (1s, 2s, 4s).
 
 **Dry run behavior (when `options.dryRun` is true):**
-`flush` collects the pending changes list and returns them in `ExportResult.preview` without calling `updateCharacterV2` or modifying any remote state. Conflict detection is still performed so users can see whether a conflict *would* occur, but no resolution actions are taken.
+`flush` collects the pending changes list and returns them in `ExportResult.preview` without calling `updateCharacterV2` or modifying any remote state. Conflict detection is still performed so users can see whether a conflict _would_ occur, but no resolution actions are taken.
 
 #### ConflictResolver (class)
 
@@ -223,10 +245,15 @@ Detects version conflicts and presents resolution options to the user.
 class ConflictResolver {
   constructor(client: DemiplaneClient);
   checkForConflict(actor: Actor): Promise<ConflictStatus>;
-  resolveConflict(actor: Actor, resolution: "reimport" | "force-push" | "cancel"): Promise<void>;
+  resolveConflict(
+    actor: Actor,
+    resolution: "reimport" | "force-push" | "cancel"
+  ): Promise<void>;
 }
 
-type ConflictStatus = { conflicted: false } | { conflicted: true; localVersion: number; remoteVersion: number };
+type ConflictStatus =
+  | { conflicted: false }
+  | { conflicted: true; localVersion: number; remoteVersion: number };
 ```
 
 #### SyncTabRenderer (class)
@@ -240,6 +267,7 @@ class SyncTabRenderer {
 ```
 
 **Tab sections:**
+
 - Status: linked UUID, last sync timestamp, local/remote versions
 - Dry run indicator: persistent badge/banner when `dryRun` setting is enabled, distinct from the in-progress spinner (per Requirement 15.12)
 - Pending changes: field name + new value for each queued change
@@ -265,6 +293,7 @@ class HookManager {
 ```
 
 **Hooks registered:**
+
 - `updateActor` — detects HP, temp HP, hero points, focus points changes
 - `updateItem` — detects consumable quantity changes
 - `createItem` — detects new inventory items
@@ -287,6 +316,7 @@ function parseCharacterLinkInput(input: string): CharacterLinkParseResult;
 ```
 
 **Parsing rules:**
+
 1. Trim whitespace from input.
 2. If the input matches the URL pattern `https://app.demiplane.com/nexus/pathfinder2e/character-sheet/{uuid}`, extract the trailing UUID segment.
 3. If the input (or extracted segment) matches the UUID format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` (8-4-4-4-12 hex characters, case-insensitive), return `{ valid: true, uuid }`.
@@ -298,10 +328,10 @@ Registration of module settings per Requirements 12 and 18.
 
 ```typescript
 interface ModuleSettingsSchema {
-  demiplaneEmail: string;       // scope: "client"
-  demiplanePassword: string;    // scope: "client", type: password
-  autoSync: boolean;            // scope: "world"
-  dryRun: boolean;              // scope: "world", default: false
+  demiplaneEmail: string; // scope: "client"
+  demiplanePassword: string; // scope: "client", type: password
+  autoSync: boolean; // scope: "world"
+  dryRun: boolean; // scope: "world", default: false
 }
 ```
 
@@ -332,7 +362,7 @@ type CharacterEngine = DemiplaneEngine | CustomEngine;
 interface DemiplaneEngine {
   id: string;
   demiplaneEngineId: string;
-  name: string;                    // e.g. "tabula/spell/fireball-rm.eng"
+  name: string; // e.g. "tabula/spell/fireball-rm.eng"
   type: "DemiplaneEngine";
   saveType: "CharacterBuilder" | "CharacterSheet";
   args: EngineArgs;
@@ -340,7 +370,7 @@ interface DemiplaneEngine {
 
 interface CustomEngine {
   id: string;
-  name: string;                    // e.g. "character_hit-points_current"
+  name: string; // e.g. "character_hit-points_current"
   value: string | number | boolean;
   type: "CustomDemiplaneEngine";
   saveType: "CharacterBuilder" | "CharacterSheet";
@@ -352,16 +382,16 @@ interface CustomEngine {
 
 #### Session State Store Names
 
-| Foundry Concept | Demiplane Store Name | Type |
-|----------------|---------------------|------|
-| Current HP | `character_hit-points_current` | number |
-| Temp HP | `character_hit-points_temp` | number |
-| Hero Points | `character_hero-points` | number |
-| Focus Points | `character_focus_current` | number |
-| Gold | `character_currency_gold` | number |
-| Silver | `character_currency_silver` | number |
-| Copper | `character_currency_copper` | number |
-| Platinum | `character_currency_platinum` | number |
+| Foundry Concept | Demiplane Store Name           | Type   |
+| --------------- | ------------------------------ | ------ |
+| Current HP      | `character_hit-points_current` | number |
+| Temp HP         | `character_hit-points_temp`    | number |
+| Hero Points     | `character_hero-points`        | number |
+| Focus Points    | `character_focus_current`      | number |
+| Gold            | `character_currency_gold`      | number |
+| Silver          | `character_currency_silver`    | number |
+| Copper          | `character_currency_copper`    | number |
+| Platinum        | `character_currency_platinum`  | number |
 
 ### Foundry Side
 
@@ -369,9 +399,9 @@ interface CustomEngine {
 
 ```typescript
 interface DemiplaneActorFlags {
-  characterId: string;           // Demiplane character UUID
-  lastSyncTimestamp: number;     // Unix ms of last successful sync
-  lastKnownVersion: number;      // Version number from last fetch/push
+  characterId: string; // Demiplane character UUID
+  lastSyncTimestamp: number; // Unix ms of last successful sync
+  lastKnownVersion: number; // Version number from last fetch/push
   lastImportSummary?: ImportSummary;
   unresolvedSlugs?: UnresolvedSlug[];
   pendingChanges?: PendingChange[];
@@ -457,89 +487,89 @@ sequenceDiagram
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Custom engine value update round-trip
 
-*For any* valid engines array and any store name that exists within it, updating a Custom_Engine's value and then querying for that store name SHALL return the new value.
+_For any_ valid engines array and any store name that exists within it, updating a Custom_Engine's value and then querying for that store name SHALL return the new value.
 
 **Validates: Requirements 7.5**
 
 ### Property 2: Immutable engine update preserves non-matching entries
 
-*For any* valid engines array, updating a Custom_Engine value for a given store name SHALL preserve referential equality (`===`) for all engine entries whose name does not match the provided store name.
+_For any_ valid engines array, updating a Custom_Engine value for a given store name SHALL preserve referential equality (`===`) for all engine entries whose name does not match the provided store name.
 
 **Validates: Requirements 7.2, 7.3**
 
 ### Property 3: Slug transformation is idempotent on non-rm slugs
 
-*For any* slug string that does not end with "-rm", the Slug Mapper transformation SHALL return the slug unchanged (identity transformation).
+_For any_ slug string that does not end with "-rm", the Slug Mapper transformation SHALL return the slug unchanged (identity transformation).
 
 **Validates: Requirements 8.2**
 
 ### Property 4: Slug transformation strips exactly trailing -rm
 
-*For any* slug string that ends with "-rm", the Slug Mapper transformation SHALL produce a result equal to the original slug with exactly the last 3 characters removed, and that result SHALL NOT end with "-rm".
+_For any_ slug string that ends with "-rm", the Slug Mapper transformation SHALL produce a result equal to the original slug with exactly the last 3 characters removed, and that result SHALL NOT end with "-rm".
 
 **Validates: Requirements 8.1**
 
 ### Property 5: Engine type guard mutual exclusivity
 
-*For any* CharacterEngine object, exactly one of `isCustomEngine` and `isDemiplaneEngine` SHALL return true.
+_For any_ CharacterEngine object, exactly one of `isCustomEngine` and `isDemiplaneEngine` SHALL return true.
 
 **Validates: Requirements 6.1, 6.2**
 
 ### Property 6: findEnginesBySlug returns only exact slug matches
 
-*For any* engines array and any target slug string, all entries returned by `findEnginesBySlug` SHALL have `args.slug` exactly equal to the target slug, and no DemiplaneEngine in the original array with a matching `args.slug` SHALL be absent from the result.
+_For any_ engines array and any target slug string, all entries returned by `findEnginesBySlug` SHALL have `args.slug` exactly equal to the target slug, and no DemiplaneEngine in the original array with a matching `args.slug` SHALL be absent from the result.
 
 **Validates: Requirements 6.4**
 
 ### Property 7: findEnginesByNamePattern returns only matching entries
 
-*For any* engines array and any valid RegExp pattern, all entries returned by `findEnginesByNamePattern` SHALL have a `name` field that matches the pattern, and no entry in the original array whose name matches the pattern SHALL be absent from the result.
+_For any_ engines array and any valid RegExp pattern, all entries returned by `findEnginesByNamePattern` SHALL have a `name` field that matches the pattern, and no entry in the original array whose name matches the pattern SHALL be absent from the result.
 
 **Validates: Requirements 6.5**
 
 ### Property 8: Update with non-existent store name returns original array
 
-*For any* valid engines array and any store name that does not match any Custom_Engine in the array, `updateCustomEngineValue` SHALL return the original array unchanged (same reference).
+_For any_ valid engines array and any store name that does not match any Custom_Engine in the array, `updateCustomEngineValue` SHALL return the original array unchanged (same reference).
 
 **Validates: Requirements 7.4**
 
 ### Property 9: Debounce batching collapses rapid changes
 
-*For any* sequence of changes to the same actor within the 2-second debounce window, the ExportManager SHALL issue exactly one API call containing the final value of each changed field rather than intermediate values.
+_For any_ sequence of changes to the same actor within the 2-second debounce window, the ExportManager SHALL issue exactly one API call containing the final value of each changed field rather than intermediate values.
 
 **Validates: Requirements 10.3**
 
 ### Property 10: Rate limiter never exceeds threshold
 
-*For any* sequence of flush operations over a 60-second window for a single character, the number of Demiplane API calls SHALL not exceed 30.
+_For any_ sequence of flush operations over a 60-second window for a single character, the number of Demiplane API calls SHALL not exceed 30.
 
 **Validates: Requirements 10.4**
 
 ### Property 11: Character link input round-trip for bare UUIDs
 
-*For any* valid UUID string (8-4-4-4-12 hex), `parseCharacterLinkInput` SHALL return `{ valid: true, uuid }` with the UUID unchanged.
+_For any_ valid UUID string (8-4-4-4-12 hex), `parseCharacterLinkInput` SHALL return `{ valid: true, uuid }` with the UUID unchanged.
 
 **Validates: Requirements 12.3, 12.6**
 
 ### Property 12: Character link input extracts UUID from valid URL
 
-*For any* valid UUID string, wrapping it in the Demiplane URL prefix `https://app.demiplane.com/nexus/pathfinder2e/character-sheet/{uuid}` and passing it to `parseCharacterLinkInput` SHALL return `{ valid: true, uuid }` with the same UUID as if the bare UUID were provided directly.
+_For any_ valid UUID string, wrapping it in the Demiplane URL prefix `https://app.demiplane.com/nexus/pathfinder2e/character-sheet/{uuid}` and passing it to `parseCharacterLinkInput` SHALL return `{ valid: true, uuid }` with the same UUID as if the bare UUID were provided directly.
 
 **Validates: Requirements 12.3, 12.4**
 
 ### Property 13: Character link input rejects invalid formats
 
-*For any* string that is neither a valid UUID nor a valid Demiplane character URL, `parseCharacterLinkInput` SHALL return `{ valid: false }`.
+_For any_ string that is neither a valid UUID nor a valid Demiplane character URL, `parseCharacterLinkInput` SHALL return `{ valid: false }`.
 
 **Validates: Requirements 12.7**
 
 ### Property 14: Dry run mode is purely observational
 
-*For any* import or export operation triggered while the dry run setting is enabled, the Foundry actor's embedded documents, flags, HP, currency, hero points, focus points, and all other actor state SHALL remain unchanged, and no `updateCharacterV2` mutation SHALL be sent to the Demiplane API.
+_For any_ import or export operation triggered while the dry run setting is enabled, the Foundry actor's embedded documents, flags, HP, currency, hero points, focus points, and all other actor state SHALL remain unchanged, and no `updateCharacterV2` mutation SHALL be sent to the Demiplane API.
 
 **Validates: Requirements 18.1, 18.3, 18.4, 18.5**
 
@@ -547,29 +577,29 @@ sequenceDiagram
 
 ### API Client Errors (`demiplane-api`)
 
-| Error Condition | Behavior | Error Type |
-|----------------|----------|------------|
-| HTTP non-200 response | Throw `DemiplaneApiError` with status code, operation name, request URL | `DemiplaneApiError` |
-| JSON parse failure | Throw error indicating parse failure with operation name | `DemiplaneApiError` |
-| Empty email or password | Throw validation error before network request | `Error` |
-| Character not found (null/empty data) | Throw error including the character UUID | `Error` |
-| GraphQL errors array non-empty | Throw error with all messages joined by "; " | `Error` |
-| Invalid UUID format | Throw validation error before network request | `Error` |
-| Invalid nexus ID (not positive integer) | Throw validation error before network request | `Error` |
-| Missing engines in response | Throw error indicating invalid response structure | `Error` |
-| Write without authentication | Throw error indicating authentication required | `Error` |
+| Error Condition                         | Behavior                                                                | Error Type          |
+| --------------------------------------- | ----------------------------------------------------------------------- | ------------------- |
+| HTTP non-200 response                   | Throw `DemiplaneApiError` with status code, operation name, request URL | `DemiplaneApiError` |
+| JSON parse failure                      | Throw error indicating parse failure with operation name                | `DemiplaneApiError` |
+| Empty email or password                 | Throw validation error before network request                           | `Error`             |
+| Character not found (null/empty data)   | Throw error including the character UUID                                | `Error`             |
+| GraphQL errors array non-empty          | Throw error with all messages joined by "; "                            | `Error`             |
+| Invalid UUID format                     | Throw validation error before network request                           | `Error`             |
+| Invalid nexus ID (not positive integer) | Throw validation error before network request                           | `Error`             |
+| Missing engines in response             | Throw error indicating invalid response structure                       | `Error`             |
+| Write without authentication            | Throw error indicating authentication required                          | `Error`             |
 
 ### Foundry Module Errors (`foundry-demiplane-pf2e`)
 
-| Error Condition | Behavior |
-|----------------|----------|
-| Slug resolution failure | Log warning with slug details, skip item, continue import |
-| Import API failure | Abort import, preserve actor state, return error in ImportSummary |
-| Export failure (after retries) | Display `ui.notifications.error`, retain pending changes |
-| Conflict detected | Present dialog with Re-import / Force push / Cancel options |
-| Invalid character UUID format | Display `ui.notifications.error`, don't persist link |
+| Error Condition                               | Behavior                                                                   |
+| --------------------------------------------- | -------------------------------------------------------------------------- |
+| Slug resolution failure                       | Log warning with slug details, skip item, continue import                  |
+| Import API failure                            | Abort import, preserve actor state, return error in ImportSummary          |
+| Export failure (after retries)                | Display `ui.notifications.error`, retain pending changes                   |
+| Conflict detected                             | Present dialog with Re-import / Force push / Cancel options                |
+| Invalid character UUID format                 | Display `ui.notifications.error`, don't persist link                       |
 | Input is neither valid UUID nor Demiplane URL | Display `ui.notifications.error` with expected formats, don't persist link |
-| Character UUID not accessible | Display `ui.notifications.error`, don't persist link |
+| Character UUID not accessible                 | Display `ui.notifications.error`, don't persist link                       |
 
 ### Retry Strategy (Export)
 
@@ -592,12 +622,14 @@ After attempt 4: give up, notify user, retain pending changes
 ### Unit Tests (both packages)
 
 **`demiplane-api`:**
+
 - `DemiplaneClient` — mock `fetch` to test auth flow, error handling, GraphQL request construction, response parsing
 - Engine utilities — test type guards, query functions, immutable update functions with concrete examples
 - Validation — test UUID format validation, empty credential rejection, invalid nexus ID rejection
 - Error types — verify error properties are correctly populated
 
 **`foundry-demiplane-pf2e`:**
+
 - `SlugMapper` — test slug transformation rules, mock compendium pack index queries
 - `ImportOrchestrator` — mock `DemiplaneClient` and Foundry actor API, verify correct ordering of `createEmbeddedDocuments` calls
 - `ExportManager` — test debounce behavior, rate limiting, retry logic with fake timers
@@ -615,6 +647,7 @@ Property-based testing is appropriate here because the engine utilities and slug
 **Tag format:** `Feature: demiplane-foundry-sync, Property {number}: {property_text}`
 
 Properties to implement:
+
 - Properties 1–2: Round-trip and immutability for `updateCustomEngineValue`
 - Properties 3–4: Slug transformation correctness
 - Property 5: Type guard mutual exclusivity

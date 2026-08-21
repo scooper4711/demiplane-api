@@ -5,7 +5,11 @@ import {
   findCustomEngineByName,
   updateCustomEngineValue,
 } from "./engines.js";
-import type { CharacterEngine, CustomEngine, DemiplaneEngine } from "./types.js";
+import type {
+  CharacterEngine,
+  CustomEngine,
+  DemiplaneEngine,
+} from "./types.js";
 
 const mockCustomEngine: CustomEngine = {
   id: "custom_character_hit-points_current",
@@ -54,7 +58,10 @@ describe("isDemiplaneEngine", () => {
 describe("findCustomEngineByName", () => {
   it("finds engine by store name", () => {
     const engines: CharacterEngine[] = [mockCustomEngine, mockDemiplaneEngine];
-    const result = findCustomEngineByName(engines, "character_hit-points_current");
+    const result = findCustomEngineByName(
+      engines,
+      "character_hit-points_current"
+    );
     expect(result).toEqual(mockCustomEngine);
   });
 

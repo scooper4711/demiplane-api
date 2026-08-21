@@ -295,7 +295,10 @@ The `EngineArgs` interface uses an index signature (`[key: string]: unknown`) so
 Here's a real example from a PF2e integration that adds spell-related utilities on top of this library:
 
 ```typescript
-import type { CharacterEngine, DemiplaneEngine } from "@scooper4711/demiplane-api";
+import type {
+  CharacterEngine,
+  DemiplaneEngine,
+} from "@scooper4711/demiplane-api";
 import { isDemiplaneEngine } from "@scooper4711/demiplane-api";
 
 /**
@@ -332,7 +335,9 @@ function findPreparedSpells(engines: CharacterEngine[]): DemiplaneEngine[] {
 function isCurriculumSpell(engine: DemiplaneEngine): boolean {
   const args = engine.args as Pf2eSpellEngineArgs;
   const slot = args.spellSlot;
-  return typeof slot === "string" && slot.includes("wizard-school-spellbook-slot");
+  return (
+    typeof slot === "string" && slot.includes("wizard-school-spellbook-slot")
+  );
 }
 ```
 

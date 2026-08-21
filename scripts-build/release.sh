@@ -136,7 +136,7 @@ ENTRY_FILE=$(mktemp)
         echo "$subject" | sed -E 's/^feat(\([^)]*\))?: /- /' >> "$ADDED_FILE"
       elif echo "$subject" | grep -qE '^fix(\(.+\))?:'; then
         echo "$subject" | sed -E 's/^fix(\([^)]*\))?: /- /' >> "$FIXED_FILE"
-      elif echo "$subject" | grep -qE '^refactor(\(.+\))?:|^chore(\(.+\))?:|^docs(\(.+\))?:'; then
+      elif echo "$subject" | grep -qE '^(refactor|chore|docs|ci|build|perf|style|test)(\(.+\))?:'; then
         echo "$subject" | sed -E 's/^[a-z]+(\([^)]*\))?: /- /' >> "$CHANGED_FILE"
       fi
     done <<< "$COMMITS_SINCE"

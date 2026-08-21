@@ -15,13 +15,17 @@ export default defineConfig([
         projectService: {
           allowDefaultProject: ["eslint.config.ts"],
         },
-        tsconfigRootDir: import.meta.dirname
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
-      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }]
-    }
-  }, {
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        { allowNumber: true },
+      ],
+    },
+  },
+  {
     files: ["**/*.test.ts", "tests/**/*.ts"],
     rules: {
       // Relax rules for tests
@@ -31,6 +35,7 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-non-null-assertion": "off"
-  }
-  }]);
+      "@typescript-eslint/no-non-null-assertion": "off",
+    },
+  },
+]);

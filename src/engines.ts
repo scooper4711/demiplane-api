@@ -1,11 +1,17 @@
-import type { CharacterEngine, CustomEngine, DemiplaneEngine } from "./types.js";
+import type {
+  CharacterEngine,
+  CustomEngine,
+  DemiplaneEngine,
+} from "./types.js";
 
 /**
  * Type guard that checks whether an engine is a user-defined custom engine.
  * @param engine - The engine entry to check.
  * @returns `true` if the engine is a {@link CustomEngine}.
  */
-export function isCustomEngine(engine: CharacterEngine): engine is CustomEngine {
+export function isCustomEngine(
+  engine: CharacterEngine
+): engine is CustomEngine {
   return engine.type === "CustomDemiplaneEngine";
 }
 
@@ -46,8 +52,7 @@ export function findEnginesBySlug(
   slug: string
 ): DemiplaneEngine[] {
   return engines.filter(
-    (e): e is DemiplaneEngine =>
-      isDemiplaneEngine(e) && e.args.slug === slug
+    (e): e is DemiplaneEngine => isDemiplaneEngine(e) && e.args.slug === slug
   );
 }
 

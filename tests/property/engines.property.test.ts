@@ -41,7 +41,7 @@ const demiplaneEngineArb: fc.Arbitrary<DemiplaneEngine> = fc.record({
   ),
   args: fc.record({
     id: fc.option(fc.uuid(), { nil: null }),
-    slug: fc.string({ minLength: 1}),
+    slug: fc.string({ minLength: 1 }),
   }),
 });
 
