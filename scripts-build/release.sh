@@ -47,7 +47,7 @@ for arg in "$@"; do
 done
 
 # Get the latest semver tag
-LATEST_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+LATEST_TAG=$((git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)||true)
 
 if [[ -z "$LATEST_TAG" ]]; then
   echo "No existing version tags found. Starting at v0.1.0"
