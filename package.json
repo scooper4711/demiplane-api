@@ -30,6 +30,10 @@
   ],
   "author": "scooper4711",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scooper4711/demiplane-api"
+  },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
     "@types/node": "^22.15.0",
