@@ -1,12 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-  type MockInstance,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { DemiplaneClient } from "../../src/client.js";
 import { DemiplaneApiError } from "../../src/errors.js";
 
@@ -60,9 +52,7 @@ describe("DemiplaneClient", () => {
       const client = new DemiplaneClient();
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 401 }));
 
-      await expect(
-        client.authenticate("user@example.com", "password123")
-      ).rejects.toSatisfy((error: unknown) => {
+      await expect(client.authenticate("user@example.com", "password123")).rejects.toSatisfy((error: unknown) => {
         expect(error).toBeInstanceOf(DemiplaneApiError);
         const apiError = error as DemiplaneApiError;
         expect(apiError.statusCode).toBe(401);
@@ -81,9 +71,9 @@ describe("DemiplaneClient", () => {
         })
       );
 
-      await expect(
-        client.authenticate("user@example.com", "password123")
-      ).rejects.toThrow(/Failed to parse authentication response as JSON/);
+      await expect(client.authenticate("user@example.com", "password123")).rejects.toThrow(
+        /Failed to parse authentication response as JSON/
+      );
     });
 
     it("throws DemiplaneApiError when GraphQL token request fails", async () => {
@@ -100,9 +90,7 @@ describe("DemiplaneClient", () => {
       // GraphQL token request fails
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 403 }));
 
-      await expect(
-        client.authenticate("user@example.com", "password123")
-      ).rejects.toSatisfy((error: unknown) => {
+      await expect(client.authenticate("user@example.com", "password123")).rejects.toSatisfy((error: unknown) => {
         expect(error).toBeInstanceOf(DemiplaneApiError);
         const apiError = error as DemiplaneApiError;
         expect(apiError.statusCode).toBe(403);
@@ -131,9 +119,9 @@ describe("DemiplaneClient", () => {
         })
       );
 
-      await expect(
-        client.authenticate("user@example.com", "password123")
-      ).rejects.toThrow(/Failed to parse GraphQL token response as JSON/);
+      await expect(client.authenticate("user@example.com", "password123")).rejects.toThrow(
+        /Failed to parse GraphQL token response as JSON/
+      );
     });
 
     it("stores token on success and attaches Bearer header on subsequent requests", async () => {
@@ -162,23 +150,40 @@ describe("DemiplaneClient", () => {
         new Response(
           JSON.stringify({
             data: {
-              demiplane_user_character: [
-                { uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 1 },
-              ],
+              demiplane_user_character: [{ uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 1 }],
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         )
       );
 
-      await client.fetchCharacterVersion(
-        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-      );
+      await client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 
       const graphqlCall = fetchSpy.mock.calls[2];
       const requestInit = graphqlCall![1] as RequestInit;
       const headers = requestInit.headers as Record<string, string>;
       expect(headers["Authorization"]).toBe("Bearer graphql-token-xyz");
+    });
+  });
+
+  describe("validateToken", () => {
+    it("succeeds when the authenticated read is accepted", async () => {
+      const client = await createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { demiplane_user_character: [] } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+      await expect(client.validateToken()).resolves.toBeUndefined();
+      const requestInit = fetchSpy.mock.calls[2]![1] as RequestInit;
+      expect((requestInit.headers as Record<string, string>).Authorization).toBe("Bearer gql-tok");
+    });
+
+    it("rejects when no token is configured", async () => {
+      await expect(new DemiplaneClient().validateToken()).rejects.toThrow("A GraphQL token is required for validation");
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -190,18 +195,14 @@ describe("DemiplaneClient", () => {
         new Response(
           JSON.stringify({
             data: {
-              demiplane_user_character: [
-                { uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 5 },
-              ],
+              demiplane_user_character: [{ uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 5 }],
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         )
       );
 
-      const result = await client.fetchCharacterVersion(
-        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-      );
+      const result = await client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
       expect(result).toEqual({
         uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         version: 5,
@@ -230,11 +231,7 @@ describe("DemiplaneClient", () => {
 
   describe("DemiplaneApiError", () => {
     it("has correct statusCode, operationName, and requestUrl properties", () => {
-      const error = new DemiplaneApiError(
-        404,
-        "character fetch",
-        "https://apiv4.demiplane.com/v1/graphql"
-      );
+      const error = new DemiplaneApiError(404, "character fetch", "https://apiv4.demiplane.com/v1/graphql");
 
       expect(error).toBeInstanceOf(Error);
       expect(error).toBeInstanceOf(DemiplaneApiError);
@@ -272,9 +269,7 @@ describe("DemiplaneClient", () => {
           { status: 200 }
         )
       );
-      const result = await client.fetchCharacterData(
-        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-      );
+      const result = await client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
       expect(result.engines).toHaveLength(1);
       expect(result.engineCacheIdsBySource).toEqual({ source1: ["id1"] });
     });
@@ -289,9 +284,9 @@ describe("DemiplaneClient", () => {
           { status: 200 }
         )
       );
-      await expect(
-        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-      ).rejects.toThrow("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+      await expect(client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).rejects.toThrow(
+        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      );
     });
 
     it("throws when response has GraphQL errors", async () => {
@@ -305,9 +300,7 @@ describe("DemiplaneClient", () => {
           { status: 200 }
         )
       );
-      await expect(
-        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-      ).rejects.toThrow("err1; err2");
+      await expect(client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).rejects.toThrow("err1; err2");
     });
 
     it("throws when engines array is missing", async () => {
@@ -316,34 +309,28 @@ describe("DemiplaneClient", () => {
         new Response(
           JSON.stringify({
             data: {
-              demiplane_user_character: [
-                { data: { engineCacheIdsBySource: {} } },
-              ],
+              demiplane_user_character: [{ data: { engineCacheIdsBySource: {} } }],
             },
           }),
           { status: 200 }
         )
       );
-      await expect(
-        client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-      ).rejects.toThrow("missing engines array");
+      await expect(client.fetchCharacterData("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).rejects.toThrow(
+        "missing engines array"
+      );
     });
   });
 
   describe("UUID validation", () => {
     it("fetchCharacterData throws for invalid UUID", async () => {
       const client = new DemiplaneClient();
-      await expect(client.fetchCharacterData("not-a-uuid")).rejects.toThrow(
-        "Invalid UUID format"
-      );
+      await expect(client.fetchCharacterData("not-a-uuid")).rejects.toThrow("Invalid UUID format");
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
     it("fetchCharacterVersion throws for invalid UUID", async () => {
       const client = new DemiplaneClient();
-      await expect(client.fetchCharacterVersion("bad")).rejects.toThrow(
-        "Invalid UUID format"
-      );
+      await expect(client.fetchCharacterVersion("bad")).rejects.toThrow("Invalid UUID format");
       expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
@@ -351,23 +338,17 @@ describe("DemiplaneClient", () => {
   describe("Nexus ID validation", () => {
     it("fetchAttributeMapping throws for zero", async () => {
       const client = new DemiplaneClient();
-      await expect(client.fetchAttributeMapping(0)).rejects.toThrow(
-        "Invalid nexus ID"
-      );
+      await expect(client.fetchAttributeMapping(0)).rejects.toThrow("Invalid nexus ID");
     });
 
     it("fetchAttributeMapping throws for negative", async () => {
       const client = new DemiplaneClient();
-      await expect(client.fetchAttributeMapping(-1)).rejects.toThrow(
-        "Invalid nexus ID"
-      );
+      await expect(client.fetchAttributeMapping(-1)).rejects.toThrow("Invalid nexus ID");
     });
 
     it("fetchAttributeMapping throws for non-integer", async () => {
       const client = new DemiplaneClient();
-      await expect(client.fetchAttributeMapping(1.5)).rejects.toThrow(
-        "Invalid nexus ID"
-      );
+      await expect(client.fetchAttributeMapping(1.5)).rejects.toThrow("Invalid nexus ID");
     });
   });
 
@@ -379,9 +360,7 @@ describe("DemiplaneClient", () => {
           id: "",
           data: { engines: [], engineCacheIdsBySource: {} },
         })
-      ).rejects.toThrow(
-        "Invalid UpdateCharacterOptions - please provide both id and engines"
-      );
+      ).rejects.toThrow("Invalid UpdateCharacterOptions - please provide both id and engines");
     });
 
     it("throws error when engines is missing from data", async () => {
@@ -391,9 +370,7 @@ describe("DemiplaneClient", () => {
           id: "some-id",
           data: {} as any,
         })
-      ).rejects.toThrow(
-        "Invalid UpdateCharacterOptions - please provide both id and engines"
-      );
+      ).rejects.toThrow("Invalid UpdateCharacterOptions - please provide both id and engines");
     });
 
     it("returns false on network error", async () => {

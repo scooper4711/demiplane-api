@@ -1,15 +1,9 @@
 import { DemiplaneApiError } from "./errors.js";
-import type {
-  CharacterVersion,
-  CharacterData,
-  AttributeMapping,
-  UpdateCharacterOptions,
-} from "./types.js";
+import type { CharacterVersion, CharacterData, AttributeMapping, UpdateCharacterOptions } from "./types.js";
 
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
 const APP_BASE = "https://app.demiplane.com";
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validateUuid(characterId: string): void {
   if (!UUID_PATTERN.test(characterId)) {
@@ -19,9 +13,7 @@ function validateUuid(characterId: string): void {
 
 function validateNexusId(nexusId: number): void {
   if (!Number.isInteger(nexusId) || nexusId <= 0) {
-    throw new Error(
-      `Invalid nexus ID: must be a positive integer, got ${String(nexusId)}`
-    );
+    throw new Error(`Invalid nexus ID: must be a positive integer, got ${String(nexusId)}`);
   }
 }
 
@@ -58,6 +50,26 @@ export class DemiplaneClient {
   }
 
   /**
+   * Validates the current GraphQL bearer token with an authenticated read.
+   *
+   * @throws {Error} If no token is configured or the API rejects the request.
+   */
+  async validateToken(): Promise<void> {
+    if (!this.graphqlToken) {
+      throw new Error("A GraphQL token is required for validation");
+    }
+
+    await this.executeGraphql<{ demiplane_user_character: Array<{ uuid: string }> }>(
+      `query validateToken {
+        demiplane_user_character(limit: 1) {
+          uuid
+        }
+      }`,
+      {}
+    );
+  }
+
+  /**
    * Authenticates with Demiplane using email and password credentials.
    * On success, stores an internal GraphQL token for subsequent API calls.
    *
@@ -75,9 +87,7 @@ export class DemiplaneClient {
    */
   async authenticate(email: string, password: string): Promise<void> {
     if (!email || !password) {
-      throw new Error(
-        "Both email and password are required for authentication"
-      );
+      throw new Error("Both email and password are required for authentication");
     }
 
     const loginUrl = `${APP_BASE}/api/auth/login`;
@@ -93,20 +103,14 @@ export class DemiplaneClient {
     }
 
     if (!loginResponse.ok) {
-      throw new DemiplaneApiError(
-        loginResponse.status,
-        "authentication request",
-        loginUrl
-      );
+      throw new DemiplaneApiError(loginResponse.status, "authentication request", loginUrl);
     }
 
     let loginData: { sessionToken?: string };
     try {
       loginData = (await loginResponse.json()) as { sessionToken?: string };
     } catch {
-      throw new Error(
-        "Failed to parse authentication response as JSON for operation: authentication request"
-      );
+      throw new Error("Failed to parse authentication response as JSON for operation: authentication request");
     }
 
     const sessionToken = loginData.sessionToken;
@@ -129,20 +133,14 @@ export class DemiplaneClient {
     }
 
     if (!graphqlResponse.ok) {
-      throw new DemiplaneApiError(
-        graphqlResponse.status,
-        "GraphQL token request",
-        graphqlTokenUrl
-      );
+      throw new DemiplaneApiError(graphqlResponse.status, "GraphQL token request", graphqlTokenUrl);
     }
 
     let graphqlData: { token?: string };
     try {
       graphqlData = (await graphqlResponse.json()) as { token?: string };
     } catch {
-      throw new Error(
-        "Failed to parse GraphQL token response as JSON for operation: GraphQL token request"
-      );
+      throw new Error("Failed to parse GraphQL token response as JSON for operation: GraphQL token request");
     }
 
     const graphqlToken = graphqlData.token;
@@ -192,9 +190,7 @@ export class DemiplaneClient {
     // Runtime validation for JS callers who bypass TypeScript's type system
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!characterData.engines || !Array.isArray(characterData.engines)) {
-      throw new Error(
-        `Invalid response structure: character ${characterId} is missing engines array`
-      );
+      throw new Error(`Invalid response structure: character ${characterId} is missing engines array`);
     }
 
     return characterData;
@@ -265,16 +261,13 @@ export class DemiplaneClient {
 
     const mapping = result.demiplane_character_attribute_mapping[0];
     if (!mapping) {
-      throw new Error(
-        `No attribute mapping found for nexus: ${String(nexusId)}`
-      );
+      throw new Error(`No attribute mapping found for nexus: ${String(nexusId)}`);
     }
 
     return {
       nexusId: mapping.nexus_id,
       id: mapping.id,
-      attributeMapping:
-        mapping.attribute_mapping as AttributeMapping["attributeMapping"],
+      attributeMapping: mapping.attribute_mapping as AttributeMapping["attributeMapping"],
     };
   }
 
@@ -288,17 +281,13 @@ export class DemiplaneClient {
    */
   async updateCharacter(options: UpdateCharacterOptions): Promise<boolean> {
     if (!this.graphqlToken) {
-      throw new Error(
-        "Authentication is required for write operations. Call authenticate() first."
-      );
+      throw new Error("Authentication is required for write operations. Call authenticate() first.");
     }
 
     // Runtime validation for JS callers who bypass TypeScript's type system
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!options.id || !options.data?.engines) {
-      throw new Error(
-        "Invalid UpdateCharacterOptions - please provide both id and engines"
-      );
+      throw new Error("Invalid UpdateCharacterOptions - please provide both id and engines");
     }
 
     const query = `mutation updateCharacterV2(
@@ -347,10 +336,7 @@ export class DemiplaneClient {
     }
   }
 
-  private async executeGraphql<T>(
-    query: string,
-    variables: Record<string, unknown>
-  ): Promise<T> {
+  private async executeGraphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -365,11 +351,7 @@ export class DemiplaneClient {
     });
 
     if (!response.ok) {
-      throw new DemiplaneApiError(
-        response.status,
-        "GraphQL request",
-        GRAPHQL_ENDPOINT
-      );
+      throw new DemiplaneApiError(response.status, "GraphQL request", GRAPHQL_ENDPOINT);
     }
 
     let json: { data?: T; errors?: Array<{ message: string }> };
@@ -379,15 +361,11 @@ export class DemiplaneClient {
         errors?: Array<{ message: string }>;
       };
     } catch {
-      throw new Error(
-        "Failed to parse GraphQL response as JSON for operation: GraphQL request"
-      );
+      throw new Error("Failed to parse GraphQL response as JSON for operation: GraphQL request");
     }
 
     if (json.errors && json.errors.length > 0) {
-      throw new Error(
-        `GraphQL errors: ${json.errors.map((e) => e.message).join("; ")}`
-      );
+      throw new Error(`GraphQL errors: ${json.errors.map((e) => e.message).join("; ")}`);
     }
 
     if (!json.data) {

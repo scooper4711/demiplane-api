@@ -15,25 +15,16 @@ Requires Node.js 20 or later.
 ## Quick Start
 
 ```typescript
-import {
-  DemiplaneClient,
-  findCustomEngineByName,
-  findEnginesBySlug,
-} from "@scooper4711/demiplane-api";
+import { DemiplaneClient, findCustomEngineByName, findEnginesBySlug } from "@scooper4711/demiplane-api";
 
 const client = new DemiplaneClient();
 
 // Public characters can be read without authentication
-const data = await client.fetchCharacterData(
-  "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-);
+const data = await client.fetchCharacterData("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
 console.log(`Character has ${data.engines.length} engines`);
 
 // Query engines
-const hpEngine = findCustomEngineByName(
-  data.engines,
-  "character_hit-points_current"
-);
+const hpEngine = findCustomEngineByName(data.engines, "character_hit-points_current");
 console.log(`Current HP: ${hpEngine?.value}`);
 ```
 
@@ -74,14 +65,16 @@ Exchange credentials for a GraphQL bearer token. Throws if credentials are empty
 await client.authenticate("user@example.com", "password");
 ```
 
+#### `validateToken(): Promise<void>`
+
+Perform an authenticated read to verify that the current GraphQL bearer token is accepted by Demiplane. Throws when no token is configured or the API rejects the request.
+
 #### `fetchCharacterData(characterId: string): Promise<CharacterData>`
 
 Fetch a character's complete engine data by UUID. Works without authentication for public characters.
 
 ```typescript
-const data = await client.fetchCharacterData(
-  "abc12345-1234-5678-9abc-def012345678"
-);
+const data = await client.fetchCharacterData("abc12345-1234-5678-9abc-def012345678");
 // data.engines — array of all engine entries
 // data.engineCacheIdsBySource — metadata for cache management
 ```
@@ -97,9 +90,7 @@ Throws if:
 Check a character's current version number. Useful for conflict detection before pushing updates.
 
 ```typescript
-const version = await client.fetchCharacterVersion(
-  "abc12345-1234-5678-9abc-def012345678"
-);
+const version = await client.fetchCharacterVersion("abc12345-1234-5678-9abc-def012345678");
 console.log(`Version: ${version.version}, UUID: ${version.uuid}`);
 ```
 
@@ -157,10 +148,7 @@ Find a custom engine by its store name. Returns `undefined` if no match.
 
 ```typescript
 const hp = findCustomEngineByName(data.engines, "character_hit-points_current");
-const heroPoints = findCustomEngineByName(
-  data.engines,
-  "character_hero-points"
-);
+const heroPoints = findCustomEngineByName(data.engines, "character_hero-points");
 ```
 
 #### `findEnginesBySlug(engines, slug): DemiplaneEngine[]`
@@ -191,11 +179,7 @@ Immutably update a custom engine's value. Returns a new array with the matching 
 import { updateCustomEngineValue } from "@scooper4711/demiplane-api";
 
 // Set current HP to 42
-const updated = updateCustomEngineValue(
-  data.engines,
-  "character_hit-points_current",
-  42
-);
+const updated = updateCustomEngineValue(data.engines, "character_hit-points_current", 42);
 
 // Push the change
 await client.updateCharacter({
@@ -295,10 +279,7 @@ The `EngineArgs` interface uses an index signature (`[key: string]: unknown`) so
 Here's a real example from a PF2e integration that adds spell-related utilities on top of this library:
 
 ```typescript
-import type {
-  CharacterEngine,
-  DemiplaneEngine,
-} from "@scooper4711/demiplane-api";
+import type { CharacterEngine, DemiplaneEngine } from "@scooper4711/demiplane-api";
 import { isDemiplaneEngine } from "@scooper4711/demiplane-api";
 
 /**
@@ -312,10 +293,7 @@ interface Pf2eSpellEngineArgs {
 }
 
 function findSpellEngines(engines: CharacterEngine[]): DemiplaneEngine[] {
-  return engines.filter(
-    (e): e is DemiplaneEngine =>
-      isDemiplaneEngine(e) && e.name.startsWith("tabula/spell/")
-  );
+  return engines.filter((e): e is DemiplaneEngine => isDemiplaneEngine(e) && e.name.startsWith("tabula/spell/"));
 }
 
 function findSpellbookSpells(engines: CharacterEngine[]): DemiplaneEngine[] {
@@ -335,9 +313,7 @@ function findPreparedSpells(engines: CharacterEngine[]): DemiplaneEngine[] {
 function isCurriculumSpell(engine: DemiplaneEngine): boolean {
   const args = engine.args as Pf2eSpellEngineArgs;
   const slot = args.spellSlot;
-  return (
-    typeof slot === "string" && slot.includes("wizard-school-spellbook-slot")
-  );
+  return typeof slot === "string" && slot.includes("wizard-school-spellbook-slot");
 }
 ```
 
@@ -375,10 +351,7 @@ const data = await client.fetchCharacterData(characterUuid);
 const classEngines = findEnginesBySlug(data.engines, "wizard");
 
 // Your game-specific session state store names
-const currentHp = findCustomEngineByName(
-  data.engines,
-  "character_hit-points_current"
-);
+const currentHp = findCustomEngineByName(data.engines, "character_hit-points_current");
 
 // Your game-specific translation logic
 // translateToFoundry5e(data.engines, actor);
