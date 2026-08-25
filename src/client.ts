@@ -2,7 +2,6 @@ import { DemiplaneApiError } from "./errors.js";
 import type { CharacterVersion, CharacterData, AttributeMapping, UpdateCharacterOptions } from "./types.js";
 
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
-const APP_BASE = "https://app.demiplane.com";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validateUuid(characterId: string): void {
@@ -19,12 +18,12 @@ function validateNexusId(nexusId: number): void {
 
 /**
  * Client for interacting with the Demiplane GraphQL API.
- * Handles authentication, character data retrieval, and character updates.
+ * Handles character data retrieval and character updates.
  *
  * @example
  * ```ts
  * const client = new DemiplaneClient();
- * await client.authenticate("user@example.com", "password");
+ * client.setToken("your-graphql-jwt");
  * const data = await client.fetchCharacterData("some-uuid");
  * ```
  */
@@ -67,88 +66,6 @@ export class DemiplaneClient {
       }`,
       {}
     );
-  }
-
-  /**
-   * Authenticates with Demiplane using email and password credentials.
-   * On success, stores an internal GraphQL token for subsequent API calls.
-   *
-   * @param email - The user's Demiplane account email.
-   * @param password - The user's Demiplane account password.
-   * @throws {Error} If email or password is empty.
-   * @throws {DemiplaneApiError} If the login or token request fails.
-   * @throws {Error} If the response cannot be parsed or is missing expected fields.
-   *
-   * @example
-   * ```ts
-   * const client = new DemiplaneClient();
-   * await client.authenticate("user@example.com", "s3cret");
-   * ```
-   */
-  async authenticate(email: string, password: string): Promise<void> {
-    if (!email || !password) {
-      throw new Error("Both email and password are required for authentication");
-    }
-
-    const loginUrl = `${APP_BASE}/api/auth/login`;
-    let loginResponse: Response;
-    try {
-      loginResponse = await fetch(loginUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-    } catch {
-      throw new DemiplaneApiError(0, "authentication request", loginUrl);
-    }
-
-    if (!loginResponse.ok) {
-      throw new DemiplaneApiError(loginResponse.status, "authentication request", loginUrl);
-    }
-
-    let loginData: { sessionToken?: string };
-    try {
-      loginData = (await loginResponse.json()) as { sessionToken?: string };
-    } catch {
-      throw new Error("Failed to parse authentication response as JSON for operation: authentication request");
-    }
-
-    const sessionToken = loginData.sessionToken;
-    if (!sessionToken) {
-      throw new Error("Authentication response missing session token");
-    }
-
-    const graphqlTokenUrl = `${APP_BASE}/api/generate-graphql-token`;
-    let graphqlResponse: Response;
-    try {
-      graphqlResponse = await fetch(graphqlTokenUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionToken}`,
-        },
-      });
-    } catch {
-      throw new DemiplaneApiError(0, "GraphQL token request", graphqlTokenUrl);
-    }
-
-    if (!graphqlResponse.ok) {
-      throw new DemiplaneApiError(graphqlResponse.status, "GraphQL token request", graphqlTokenUrl);
-    }
-
-    let graphqlData: { token?: string };
-    try {
-      graphqlData = (await graphqlResponse.json()) as { token?: string };
-    } catch {
-      throw new Error("Failed to parse GraphQL token response as JSON for operation: GraphQL token request");
-    }
-
-    const graphqlToken = graphqlData.token;
-    if (!graphqlToken) {
-      throw new Error("GraphQL token response missing token");
-    }
-
-    this.graphqlToken = graphqlToken;
   }
 
   /**
@@ -273,15 +190,15 @@ export class DemiplaneClient {
 
   /**
    * Persists updated character data to the Demiplane API.
-   * Requires prior authentication via {@link authenticate}.
+   * Requires a token to be set via {@link setToken}.
    *
    * @param options - The update payload including character ID, data, and optional metadata.
    * @returns `true` if the update succeeded, `false` otherwise.
-   * @throws {Error} If the client has not been authenticated.
+   * @throws {Error} If the client has no token set.
    */
   async updateCharacter(options: UpdateCharacterOptions): Promise<boolean> {
     if (!this.graphqlToken) {
-      throw new Error("Authentication is required for write operations. Call authenticate() first.");
+      throw new Error("Authentication is required for write operations. Call setToken() first.");
     }
 
     // Runtime validation for JS callers who bypass TypeScript's type system

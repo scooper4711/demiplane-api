@@ -1,14 +1,4 @@
 /**
- * Authentication tokens returned by the Demiplane login flow.
- */
-export interface DemiplaneAuthTokens {
-  /** The session token used to generate further API tokens. */
-  sessionToken: string;
-  /** The GraphQL bearer token used to authorize API requests. */
-  graphqlToken: string;
-}
-
-/**
  * Arguments attached to a character engine entry.
  * Contains identification and placement metadata used by the Demiplane character builder.
  */

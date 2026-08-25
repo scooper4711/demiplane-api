@@ -1,7 +1,6 @@
 export { DemiplaneClient } from "./client.js";
 export { DemiplaneApiError } from "./errors.js";
 export type {
-  DemiplaneAuthTokens,
   CharacterEngine,
   CustomEngine,
   DemiplaneEngine,

@@ -9,21 +9,9 @@ describe("DemiplaneClient", () => {
     fetchSpy = vi.spyOn(globalThis, "fetch");
   });
 
-  async function createAuthenticatedClient(): Promise<DemiplaneClient> {
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ sessionToken: "tok" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
-    );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ token: "gql-tok" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
-    );
+  function createAuthenticatedClient(): DemiplaneClient {
     const client = new DemiplaneClient();
-    await client.authenticate("user@test.com", "pass");
+    client.setToken("gql-tok");
     return client;
   }
 
@@ -31,144 +19,9 @@ describe("DemiplaneClient", () => {
     vi.restoreAllMocks();
   });
 
-  describe("authenticate", () => {
-    it("throws when email is empty", async () => {
-      const client = new DemiplaneClient();
-      await expect(client.authenticate("", "password123")).rejects.toThrow(
-        "Both email and password are required for authentication"
-      );
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
-
-    it("throws when password is empty", async () => {
-      const client = new DemiplaneClient();
-      await expect(client.authenticate("user@example.com", "")).rejects.toThrow(
-        "Both email and password are required for authentication"
-      );
-      expect(fetchSpy).not.toHaveBeenCalled();
-    });
-
-    it("throws DemiplaneApiError when login request returns non-200", async () => {
-      const client = new DemiplaneClient();
-      fetchSpy.mockResolvedValueOnce(new Response(null, { status: 401 }));
-
-      await expect(client.authenticate("user@example.com", "password123")).rejects.toSatisfy((error: unknown) => {
-        expect(error).toBeInstanceOf(DemiplaneApiError);
-        const apiError = error as DemiplaneApiError;
-        expect(apiError.statusCode).toBe(401);
-        expect(apiError.operationName).toBe("authentication request");
-        expect(apiError.requestUrl).toContain("/api/auth/login");
-        return true;
-      });
-    });
-
-    it("throws when login response JSON is unparseable", async () => {
-      const client = new DemiplaneClient();
-      fetchSpy.mockResolvedValueOnce(
-        new Response("not-json{{{", {
-          status: 200,
-          headers: { "Content-Type": "text/plain" },
-        })
-      );
-
-      await expect(client.authenticate("user@example.com", "password123")).rejects.toThrow(
-        /Failed to parse authentication response as JSON/
-      );
-    });
-
-    it("throws DemiplaneApiError when GraphQL token request fails", async () => {
-      const client = new DemiplaneClient();
-
-      // Login succeeds
-      fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify({ sessionToken: "session-abc" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      // GraphQL token request fails
-      fetchSpy.mockResolvedValueOnce(new Response(null, { status: 403 }));
-
-      await expect(client.authenticate("user@example.com", "password123")).rejects.toSatisfy((error: unknown) => {
-        expect(error).toBeInstanceOf(DemiplaneApiError);
-        const apiError = error as DemiplaneApiError;
-        expect(apiError.statusCode).toBe(403);
-        expect(apiError.operationName).toBe("GraphQL token request");
-        expect(apiError.requestUrl).toContain("/api/generate-graphql-token");
-        return true;
-      });
-    });
-
-    it("throws when GraphQL token response JSON is unparseable", async () => {
-      const client = new DemiplaneClient();
-
-      // Login succeeds
-      fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify({ sessionToken: "session-abc" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      // GraphQL token response is not valid JSON
-      fetchSpy.mockResolvedValueOnce(
-        new Response("invalid-json", {
-          status: 200,
-          headers: { "Content-Type": "text/plain" },
-        })
-      );
-
-      await expect(client.authenticate("user@example.com", "password123")).rejects.toThrow(
-        /Failed to parse GraphQL token response as JSON/
-      );
-    });
-
-    it("stores token on success and attaches Bearer header on subsequent requests", async () => {
-      const client = new DemiplaneClient();
-
-      // Login succeeds
-      fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify({ sessionToken: "session-abc" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      // GraphQL token request succeeds
-      fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify({ token: "graphql-token-xyz" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      await client.authenticate("user@example.com", "password123");
-
-      // Now make a GraphQL request and verify the Bearer header is attached
-      fetchSpy.mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
-              demiplane_user_character: [{ uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", version: 1 }],
-            },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        )
-      );
-
-      await client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-
-      const graphqlCall = fetchSpy.mock.calls[2];
-      const requestInit = graphqlCall![1] as RequestInit;
-      const headers = requestInit.headers as Record<string, string>;
-      expect(headers["Authorization"]).toBe("Bearer graphql-token-xyz");
-    });
-  });
-
   describe("validateToken", () => {
     it("succeeds when the authenticated read is accepted", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(
         new Response(JSON.stringify({ data: { demiplane_user_character: [] } }), {
           status: 200,
@@ -177,7 +30,7 @@ describe("DemiplaneClient", () => {
       );
 
       await expect(client.validateToken()).resolves.toBeUndefined();
-      const requestInit = fetchSpy.mock.calls[2]![1] as RequestInit;
+      const requestInit = fetchSpy.mock.calls[0]![1] as RequestInit;
       expect((requestInit.headers as Record<string, string>).Authorization).toBe("Bearer gql-tok");
     });
 
@@ -354,7 +207,7 @@ describe("DemiplaneClient", () => {
 
   describe("updateCharacter error handling", () => {
     it("throws error when id is empty", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       await expect(
         client.updateCharacter({
           id: "",
@@ -364,7 +217,7 @@ describe("DemiplaneClient", () => {
     });
 
     it("throws error when engines is missing from data", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       await expect(
         client.updateCharacter({
           id: "some-id",
@@ -374,7 +227,7 @@ describe("DemiplaneClient", () => {
     });
 
     it("returns false on network error", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       fetchSpy.mockRejectedValueOnce(new Error("network failure"));
       const result = await client.updateCharacter({
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -384,7 +237,7 @@ describe("DemiplaneClient", () => {
     });
 
     it("returns false on non-200 response", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 500 }));
       const result = await client.updateCharacter({
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -394,7 +247,7 @@ describe("DemiplaneClient", () => {
     });
 
     it("returns true when mutation succeeds", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -411,7 +264,7 @@ describe("DemiplaneClient", () => {
     });
 
     it("returns false when mutation returns success: false", async () => {
-      const client = await createAuthenticatedClient();
+      const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify({
