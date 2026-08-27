@@ -1,6 +1,6 @@
 # @scooper4711/demiplane-api
 
-A game-system-agnostic TypeScript client for the [Demiplane Nexus](https://app.demiplane.com) character API. Handles authentication, GraphQL queries, engine data parsing, and character updates.
+A game-system-agnostic TypeScript client for the [Demiplane Nexus](https://app.demiplane.com) character API. Handles GraphQL queries, engine data parsing, and character updates.
 
 This library is intentionally system-neutral — it knows nothing about specific game systems, compendium packs, or slug conventions. It provides the building blocks for any Demiplane integration.
 
@@ -35,21 +35,15 @@ Authentication is optional for read operations on public characters. It's requir
 ```typescript
 const client = new DemiplaneClient();
 
-// Authenticate with Demiplane credentials
-await client.authenticate("user@example.com", "password");
+// Set a GraphQL bearer token obtained externally (e.g. from a browser session)
+client.setToken("your-graphql-jwt");
 
-// The client stores the GraphQL bearer token internally
-// and attaches it to all subsequent requests automatically
+// The client attaches the token to all subsequent requests automatically
 ```
 
-The authentication flow works as follows:
+The client does not handle credential-based login directly. Obtain a valid GraphQL JWT externally (for example, by extracting it from an authenticated browser session on app.demiplane.com) and pass it via `setToken()`.
 
-1. The client sends credentials to Demiplane's login endpoint.
-2. Demiplane returns a session token.
-3. The client exchanges the session token for a GraphQL bearer token.
-4. The bearer token is stored internally and sent as an `Authorization: Bearer <token>` header on all subsequent GraphQL requests.
-
-If `authenticate()` is never called, requests are sent without an Authorization header, which allows reading public characters.
+If `setToken()` is never called, requests are sent without an Authorization header, which allows reading public characters.
 
 ## API Reference
 
@@ -57,13 +51,17 @@ If `authenticate()` is never called, requests are sent without an Authorization 
 
 The primary class for interacting with the Demiplane API.
 
-#### `authenticate(email: string, password: string): Promise<void>`
+#### `setToken(token: string): void`
 
-Exchange credentials for a GraphQL bearer token. Throws if credentials are empty, if the HTTP request fails, or if the response cannot be parsed.
+Set a GraphQL bearer token directly. Use this when you already have a valid Hasura JWT (e.g., obtained via browser login or a separate auth script).
 
 ```typescript
-await client.authenticate("user@example.com", "password");
+client.setToken("your-graphql-jwt");
 ```
+
+#### `isAuthenticated(): boolean`
+
+Returns whether the client currently has a token set.
 
 #### `validateToken(): Promise<void>`
 
@@ -105,7 +103,7 @@ const mapping = await client.fetchAttributeMapping(28); // 28 = Pathfinder 2e
 
 #### `updateCharacter(options: UpdateCharacterOptions): Promise<boolean>`
 
-Push updated character data back to Demiplane. Requires prior authentication.
+Push updated character data back to Demiplane. Requires a token to be set via `setToken()`.
 
 Returns `true` on success, `false` on failure (network error, non-200 response, or mutation failure). Does not throw on write failures — this makes error handling simpler for callers.
 
@@ -198,11 +196,11 @@ Thrown on HTTP failures. Contains structured information for programmatic handli
 import { DemiplaneApiError } from "@scooper4711/demiplane-api";
 
 try {
-  await client.authenticate("user@example.com", "wrong-password");
+  await client.fetchCharacterData("some-uuid");
 } catch (error) {
   if (error instanceof DemiplaneApiError) {
-    console.log(error.statusCode); // e.g. 401
-    console.log(error.operationName); // "authentication request"
+    console.log(error.statusCode); // e.g. 404
+    console.log(error.operationName); // "GraphQL request"
     console.log(error.requestUrl); // the URL that failed
   }
 }
@@ -212,12 +210,13 @@ try {
 
 | Operation               | Error Condition          | Behavior                   |
 | ----------------------- | ------------------------ | -------------------------- |
-| `authenticate`          | Empty email/password     | Throws `Error`             |
-| `authenticate`          | HTTP failure             | Throws `DemiplaneApiError` |
+| `setToken`              | —                        | Always succeeds            |
+| `validateToken`         | No token set             | Throws `Error`             |
+| `validateToken`         | Token rejected           | Throws `DemiplaneApiError` |
 | `fetchCharacterData`    | Invalid UUID             | Throws `Error`             |
 | `fetchCharacterData`    | Not found                | Throws `Error`             |
 | `fetchAttributeMapping` | Invalid nexus ID         | Throws `Error`             |
-| `updateCharacter`       | Not authenticated        | Throws `Error`             |
+| `updateCharacter`       | No token set             | Throws `Error`             |
 | `updateCharacter`       | Network/HTTP failure     | Returns `false`            |
 | `updateCharacter`       | Mutation returns failure | Returns `false`            |
 
@@ -235,17 +234,17 @@ graph LR
 ### Data Flow
 
 1. **Caller** invokes `DemiplaneClient` methods with character UUIDs or update payloads.
-2. **DemiplaneClient** constructs GraphQL queries/mutations, attaches the bearer token (if authenticated), and sends requests to `https://apiv4.demiplane.com/v1/graphql`.
+2. **DemiplaneClient** constructs GraphQL queries/mutations, attaches the bearer token (if set via `setToken()`), and sends requests to `https://apiv4.demiplane.com/v1/graphql`.
 3. **Demiplane GraphQL API** returns character data as JSON containing the `engines` array.
 4. **Engine Utilities** provide pure functions to query, filter, and immutably transform the engines array without any network calls.
 
 ### Token Management
 
-The client manages authentication state internally:
+The client manages token state internally:
 
-- A single `graphqlToken` field stores the bearer token after successful authentication.
+- A single `graphqlToken` field stores the bearer token after calling `setToken()`.
 - The token is attached to every GraphQL request when present.
-- There is no token refresh or expiry handling — if the token expires, the caller must re-authenticate.
+- There is no token refresh or expiry handling — if the token expires, the caller must obtain a new one and call `setToken()` again.
 - The client has no persistent storage. Tokens live only in memory for the duration of the client instance.
 
 ### Character Data Model
@@ -363,7 +362,7 @@ const currentHp = findCustomEngineByName(data.engines, "character_hit-points_cur
 
 | This library provides               | You build                                 |
 | ----------------------------------- | ----------------------------------------- |
-| Authentication and token management | Credential storage/UI for your platform   |
+| Token management                    | Token acquisition for your platform       |
 | GraphQL communication               | —                                         |
 | Engine array querying and filtering | Slug mapping for your game system         |
 | Immutable engine value updates      | Actor/character population logic          |
@@ -377,7 +376,6 @@ All types are exported for use in your integration:
 
 ```typescript
 import type {
-  DemiplaneAuthTokens,
   CharacterEngine,
   CustomEngine,
   DemiplaneEngine,
