@@ -226,27 +226,29 @@ describe("DemiplaneClient", () => {
       ).rejects.toThrow("Invalid UpdateCharacterOptions - please provide both id and engines");
     });
 
-    it("returns false on network error", async () => {
+    it("returns failure result on network error", async () => {
       const client = createAuthenticatedClient();
       fetchSpy.mockRejectedValueOnce(new Error("network failure"));
       const result = await client.updateCharacter({
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         data: { engines: [], engineCacheIdsBySource: {} },
       });
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.result).toBeNull();
     });
 
-    it("returns false on non-200 response", async () => {
+    it("returns failure result on non-200 response", async () => {
       const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 500 }));
       const result = await client.updateCharacter({
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         data: { engines: [], engineCacheIdsBySource: {} },
       });
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.result).toBeNull();
     });
 
-    it("returns true when mutation succeeds", async () => {
+    it("returns success result when mutation succeeds", async () => {
       const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(
         new Response(
@@ -260,10 +262,11 @@ describe("DemiplaneClient", () => {
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         data: { engines: [], engineCacheIdsBySource: {} },
       });
-      expect(result).toBe(true);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe("ok");
     });
 
-    it("returns false when mutation returns success: false", async () => {
+    it("returns failure result when mutation returns success: false", async () => {
       const client = createAuthenticatedClient();
       fetchSpy.mockResolvedValueOnce(
         new Response(
@@ -279,7 +282,8 @@ describe("DemiplaneClient", () => {
         id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         data: { engines: [], engineCacheIdsBySource: {} },
       });
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("fail");
     });
   });
 });

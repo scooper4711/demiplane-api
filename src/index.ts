@@ -1,4 +1,5 @@
 export { DemiplaneClient } from "./client.js";
+export type { UpdateCharacterResult } from "./client.js";
 export { DemiplaneApiError } from "./errors.js";
 export type {
   CharacterEngine,
@@ -7,6 +8,7 @@ export type {
   CharacterData,
   CharacterVersion,
   AttributeMapping,
+  UpdateCharacterOptions,
 } from "./types.js";
 export {
   isCustomEngine,

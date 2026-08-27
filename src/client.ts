@@ -4,6 +4,12 @@ import type { CharacterVersion, CharacterData, AttributeMapping, UpdateCharacter
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export interface UpdateCharacterResult {
+  success: boolean;
+  message: string | null;
+  result: string | null;
+}
+
 function validateUuid(characterId: string): void {
   if (!UUID_PATTERN.test(characterId)) {
     throw new Error(`Invalid UUID format: ${characterId}`);
@@ -91,11 +97,23 @@ export class DemiplaneClient {
         where: {uuid: {_eq: $id}, deleted_at: {_is_null: true}, enabled: {_eq: true}}
       ) {
         data
+        name
+        level
+        avatar_url
+        view_permission
+        edit_permission
       }
     }`;
 
     const result = await this.executeGraphql<{
-      demiplane_user_character: Array<{ data: CharacterData | null }>;
+      demiplane_user_character: Array<{
+        data: CharacterData | null;
+        name: string | null;
+        level: number | null;
+        avatar_url: string | null;
+        view_permission: number | null;
+        edit_permission: number | null;
+      }>;
     }>(query, { id: characterId });
 
     const character = result.demiplane_user_character[0];
@@ -110,7 +128,14 @@ export class DemiplaneClient {
       throw new Error(`Invalid response structure: character ${characterId} is missing engines array`);
     }
 
-    return characterData;
+    return {
+      ...characterData,
+      ...(character.name ? { name: character.name } : {}),
+      ...(character.level !== null ? { level: character.level } : {}),
+      ...(character.avatar_url ? { avatarUrl: character.avatar_url } : {}),
+      ...(character.view_permission !== null ? { viewPermission: character.view_permission } : {}),
+      ...(character.edit_permission !== null ? { editPermission: character.edit_permission } : {}),
+    };
   }
 
   /**
@@ -193,10 +218,10 @@ export class DemiplaneClient {
    * Requires a token to be set via {@link setToken}.
    *
    * @param options - The update payload including character ID, data, and optional metadata.
-   * @returns `true` if the update succeeded, `false` otherwise.
+   * @returns An {@link UpdateCharacterResult} describing whether the update succeeded.
    * @throws {Error} If the client has no token set.
    */
-  async updateCharacter(options: UpdateCharacterOptions): Promise<boolean> {
+  async updateCharacter(options: UpdateCharacterOptions): Promise<UpdateCharacterResult> {
     if (!this.graphqlToken) {
       throw new Error("Authentication is required for write operations. Call setToken() first.");
     }
@@ -215,7 +240,10 @@ export class DemiplaneClient {
       $classSlug: String,
       $avatarUrl: String,
       $viewPermission: Int,
-      $editPermission: Int
+      $editPermission: Int,
+      $formatedData: json,
+      $adminView: Boolean,
+      $characterBrowserInstanceUuid: String
     ) {
       updateCharacterV2(
         id: $id,
@@ -225,7 +253,10 @@ export class DemiplaneClient {
         classSlug: $classSlug,
         avatarUrl: $avatarUrl,
         viewPermission: $viewPermission,
-        editPermission: $editPermission
+        editPermission: $editPermission,
+        formatedData: $formatedData,
+        adminView: $adminView,
+        characterBrowserInstanceUuid: $characterBrowserInstanceUuid
       ) {
         message
         result
@@ -235,21 +266,24 @@ export class DemiplaneClient {
 
     try {
       const result = await this.executeGraphql<{
-        updateCharacterV2: { success: boolean; message: string };
+        updateCharacterV2: UpdateCharacterResult;
       }>(query, {
         id: options.id,
         data: options.data,
-        name: options.name,
-        level: options.level,
-        classSlug: options.classSlug,
-        avatarUrl: options.avatarUrl,
-        viewPermission: options.viewPermission,
-        editPermission: options.editPermission,
+        name: options.name ?? null,
+        level: options.level ?? null,
+        classSlug: options.classSlug ?? null,
+        avatarUrl: options.avatarUrl ?? null,
+        viewPermission: options.viewPermission ?? null,
+        editPermission: options.editPermission ?? null,
+        formatedData: options.formatedData ?? null,
+        adminView: options.adminView ?? null,
+        characterBrowserInstanceUuid: options.characterBrowserInstanceUuid ?? null,
       });
 
-      return result.updateCharacterV2.success;
-    } catch {
-      return false;
+      return result.updateCharacterV2;
+    } catch (err: unknown) {
+      return { success: false, message: err instanceof Error ? err.message : String(err), result: null };
     }
   }
 
@@ -261,10 +295,12 @@ export class DemiplaneClient {
       headers["Authorization"] = `Bearer ${this.graphqlToken}`;
     }
 
+    const cleaned = Object.fromEntries(Object.entries(variables).filter(([, value]) => value !== undefined));
+
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers,
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({ query, variables: cleaned }),
     });
 
     if (!response.ok) {

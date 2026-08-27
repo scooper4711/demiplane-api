@@ -82,6 +82,16 @@ export interface CharacterData {
   engines: CharacterEngine[];
   /** Index mapping source identifiers to arrays of engine cache IDs. */
   engineCacheIdsBySource: Record<string, string[]>;
+  /** Character display name. */
+  name?: string | undefined;
+  /** Character level. */
+  level?: number | undefined;
+  /** URL for the character's avatar image. */
+  avatarUrl?: string | undefined;
+  /** View permission level. */
+  viewPermission?: number | undefined;
+  /** Edit permission level. */
+  editPermission?: number | undefined;
 }
 
 /**
@@ -143,15 +153,21 @@ export interface UpdateCharacterOptions {
   /** The full character data payload to persist. */
   data: CharacterData;
   /** Optional new display name for the character. */
-  name?: string;
+  name?: string | undefined;
   /** Optional new level for the character. */
-  level?: number;
+  level?: number | undefined;
   /** Optional class slug for the character's primary class. */
-  classSlug?: string;
+  classSlug?: string | undefined;
   /** Optional URL for the character's avatar image. */
-  avatarUrl?: string;
+  avatarUrl?: string | undefined;
   /** Optional view permission level. */
-  viewPermission?: number;
+  viewPermission?: number | undefined;
   /** Optional edit permission level. */
-  editPermission?: number;
+  editPermission?: number | undefined;
+  /** Optional serialized character data for the Demiplane browser preview. */
+  formatedData?: unknown;
+  /** Optional flag enabling the admin-only view of the character. */
+  adminView?: boolean | undefined;
+  /** Optional UUID identifying the browser session that issued the update. */
+  characterBrowserInstanceUuid?: string | undefined;
 }
