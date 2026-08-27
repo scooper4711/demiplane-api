@@ -1,6 +1,6 @@
 {
   "name": "@scooper4711/demiplane-api",
-  "version": "0.1.0",
+  "version": "#VERSION#",
   "description": "TypeScript client for the Demiplane Nexus character API — auth, GraphQL queries, and engine read/write",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
