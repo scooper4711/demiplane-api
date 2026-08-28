@@ -92,6 +92,8 @@ export interface CharacterData {
   viewPermission?: number | undefined;
   /** Edit permission level. */
   editPermission?: number | undefined;
+  /** ISO timestamp of last save, used for optimistic concurrency. */
+  updated?: string | undefined;
 }
 
 /**

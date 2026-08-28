@@ -102,6 +102,7 @@ export class DemiplaneClient {
         avatar_url
         view_permission
         edit_permission
+        updated
       }
     }`;
 
@@ -113,6 +114,7 @@ export class DemiplaneClient {
         avatar_url: string | null;
         view_permission: number | null;
         edit_permission: number | null;
+        updated: string | null;
       }>;
     }>(query, { id: characterId });
 
@@ -135,6 +137,7 @@ export class DemiplaneClient {
       ...(character.avatar_url ? { avatarUrl: character.avatar_url } : {}),
       ...(character.view_permission !== null ? { viewPermission: character.view_permission } : {}),
       ...(character.edit_permission !== null ? { editPermission: character.edit_permission } : {}),
+      ...(character.updated ? { updated: character.updated } : {}),
     };
   }
 
@@ -170,6 +173,59 @@ export class DemiplaneClient {
     }
 
     return character;
+  }
+
+  /**
+   * Fetches the last-updated timestamp for a character, used for optimistic concurrency.
+   *
+   * @param characterId - The UUID of the character.
+   * @returns ISO timestamp string of last save.
+   * @throws {Error} If the character is not found.
+   */
+  async fetchCharacterUpdated(characterId: string): Promise<string> {
+    validateUuid(characterId);
+
+    const query = `query character_updated($id: uuid!) {
+      demiplane_user_character(
+        where: {uuid: {_eq: $id}, deleted_at: {_is_null: true}, enabled: {_eq: true}}
+      ) {
+        updated
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      demiplane_user_character: Array<{ updated: string | null }>;
+    }>(query, { id: characterId });
+
+    const character = result.demiplane_user_character[0];
+    if (!character || !character.updated) {
+      throw new Error(`Character not found or missing updated: ${characterId}`);
+    }
+
+    return character.updated;
+  }
+
+  /**
+   * Updates the user's last-accessed timestamp. Call periodically to keep the session alive.
+   *
+   * @returns True if the mutation succeeded.
+   */
+  async updateLastAccess(): Promise<boolean> {
+    if (!this.graphqlToken) {
+      throw new Error("A GraphQL token is required");
+    }
+
+    const query = `mutation updateLastAccess {
+      slsUpdateUserLastAccessed {
+        success
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      slsUpdateUserLastAccessed: { success: boolean };
+    }>(query, {});
+
+    return result.slsUpdateUserLastAccessed.success;
   }
 
   /**
