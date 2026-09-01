@@ -1,5 +1,11 @@
 import { DemiplaneApiError } from "./errors.js";
-import type { CharacterVersion, CharacterData, AttributeMapping, UpdateCharacterOptions } from "./types.js";
+import type {
+  CharacterVersion,
+  CharacterData,
+  AttributeMapping,
+  UpdateCharacterOptions,
+  CharacterJournal,
+} from "./types.js";
 
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -341,6 +347,127 @@ export class DemiplaneClient {
     } catch (err: unknown) {
       return { success: false, message: err instanceof Error ? err.message : String(err), result: null };
     }
+  }
+
+  /**
+   * Fetches all journal entries for a character.
+   *
+   * @param characterId - The UUID of the character.
+   * @returns Array of {@link CharacterJournal} entries.
+   */
+  async fetchCharacterJournals(characterId: string): Promise<CharacterJournal[]> {
+    validateUuid(characterId);
+
+    // The `data` field is a scalar JSON blob in the Demiplane schema, not a
+    // GraphQL object. Requesting a subselection (`data { items { ... } }`)
+    // fails validation with "unexpected subselection set for non-object field",
+    // so we select `data` whole and read `items` from the parsed JSON.
+    const query = `query slsGetCharacterJournals($characterId: String!, $search: String!, $ranking: String!) {
+      slsGetCharacterJournals(characterId: $characterId, search: $search, ranking: $ranking) {
+        data
+        error
+        message
+        success
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      slsGetCharacterJournals: {
+        data: { items: CharacterJournal[] } | null;
+        success: boolean;
+        message: string | null;
+      };
+    }>(query, { characterId, search: "", ranking: "desc(lastModified)" });
+
+    const journals = result.slsGetCharacterJournals;
+    if (!journals.success) {
+      throw new Error(journals.message ?? "Failed to fetch character journals");
+    }
+
+    return journals.data?.items ?? [];
+  }
+
+  /**
+   * Creates a new journal entry for a character.
+   *
+   * @param characterId - The UUID of the character.
+   * @param title - Title of the journal entry.
+   * @param content - Body text content.
+   * @returns The created {@link CharacterJournal}.
+   */
+  async createCharacterJournal(characterId: string, title: string, content: string): Promise<CharacterJournal> {
+    validateUuid(characterId);
+
+    // `data` is a scalar JSON blob (see fetchCharacterJournals); select it whole
+    // and read `item` from the parsed JSON.
+    const query = `mutation slsCreateCharacterJournal($characterId: String!, $title: String!, $content: String!) {
+      slsCreateCharacterJournal(characterId: $characterId, title: $title, content: $content) {
+        data
+        error
+        message
+        success
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      slsCreateCharacterJournal: {
+        data: { item: CharacterJournal } | null;
+        success: boolean;
+        message: string | null;
+      };
+    }>(query, { characterId, title, content });
+
+    const journals = result.slsCreateCharacterJournal;
+    if (!journals.success || !journals.data) {
+      throw new Error(journals.message ?? "Failed to create journal");
+    }
+
+    return journals.data.item;
+  }
+
+  /**
+   * Updates an existing journal entry.
+   *
+   * @param objectID - The UUID of the journal entry to update.
+   * @param characterId - The UUID of the character.
+   * @param title - New title for the journal entry.
+   * @param content - New body text content.
+   * @returns The updated {@link CharacterJournal}.
+   */
+  async updateCharacterJournal(
+    objectID: string,
+    characterId: string,
+    title: string,
+    content: string
+  ): Promise<CharacterJournal> {
+    validateUuid(objectID);
+    validateUuid(characterId);
+
+    // `data` is a scalar JSON blob (see fetchCharacterJournals); select it whole
+    // and read `item` from the parsed JSON.
+    const query = `mutation slsUpdateCharacterJournal($objectID: String!, $characterId: String!, $title: String!, $content: String!) {
+      slsUpdateCharacterJournal(objectID: $objectID, characterId: $characterId, title: $title, content: $content) {
+        data
+        error
+        message
+        success
+      }
+    }`;
+
+    const result = await this.executeGraphql<{
+      slsUpdateCharacterJournal: {
+        data: { item: CharacterJournal } | null;
+        success: boolean;
+        message: string | null;
+      };
+    }>(query, { objectID, characterId, title, content });
+
+    const journals = result.slsUpdateCharacterJournal;
+    if (!journals.success || !journals.data) {
+      throw new Error(journals.message ?? "Failed to update journal");
+    }
+
+    return journals.data.item;
   }
 
   private async executeGraphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {

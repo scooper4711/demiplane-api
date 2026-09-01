@@ -286,4 +286,238 @@ describe("DemiplaneClient", () => {
       expect(result.message).toBe("fail");
     });
   });
+
+  describe("character journals", () => {
+    const CHARACTER_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+    const JOURNAL_ID = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
+
+    function makeJournal(overrides: Record<string, unknown> = {}) {
+      return {
+        objectID: JOURNAL_ID,
+        characterId: CHARACTER_ID,
+        title: "Campaign",
+        content: "the notes",
+        description: "the notes",
+        createdDate: "2026-01-01T00:00:00.000Z",
+        lastModified: "2026-01-02T00:00:00.000Z",
+        ...overrides,
+      };
+    }
+
+    /** Reads the GraphQL query string sent in the most recent fetch call. */
+    function lastSentQuery(): string {
+      const requestInit = fetchSpy.mock.calls.at(-1)![1] as RequestInit;
+      return (JSON.parse(requestInit.body as string) as { query: string }).query;
+    }
+
+    describe("fetchCharacterJournals", () => {
+      it("returns the journal items on success", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsGetCharacterJournals: { data: { items: [makeJournal()] }, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        const result = await client.fetchCharacterJournals(CHARACTER_ID);
+        expect(result).toHaveLength(1);
+        expect(result[0]!.title).toBe("Campaign");
+        expect(result[0]!.description).toBe("the notes");
+      });
+
+      it("selects `data` as a scalar (no subselection) to avoid the schema validation error", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsGetCharacterJournals: { data: { items: [] }, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await client.fetchCharacterJournals(CHARACTER_ID);
+        const query = lastSentQuery();
+        // Regression guard: `data { items { ... } }` triggers
+        // "unexpected subselection set for non-object field".
+        expect(query).not.toMatch(/data\s*\{/);
+      });
+
+      it("returns an empty array when the payload has no items", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsGetCharacterJournals: { data: null, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await expect(client.fetchCharacterJournals(CHARACTER_ID)).resolves.toEqual([]);
+      });
+
+      it("throws with the server message when success is false", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsGetCharacterJournals: { data: null, success: false, message: "nope" } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await expect(client.fetchCharacterJournals(CHARACTER_ID)).rejects.toThrow("nope");
+      });
+
+      it("throws for an invalid UUID without calling fetch", async () => {
+        const client = createAuthenticatedClient();
+        await expect(client.fetchCharacterJournals("bad")).rejects.toThrow("Invalid UUID format");
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("createCharacterJournal", () => {
+      it("returns the created journal item on success", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsCreateCharacterJournal: { data: { item: makeJournal() }, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        const result = await client.createCharacterJournal(CHARACTER_ID, "Campaign", "the notes");
+        expect(result.objectID).toBe(JOURNAL_ID);
+        expect(result.description).toBe("the notes");
+      });
+
+      it("selects `data` as a scalar (no subselection)", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsCreateCharacterJournal: { data: { item: makeJournal() }, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await client.createCharacterJournal(CHARACTER_ID, "Campaign", "the notes");
+        expect(lastSentQuery()).not.toMatch(/data\s*\{/);
+      });
+
+      it("throws when success is false", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsCreateCharacterJournal: { data: null, success: false, message: "create failed" } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await expect(client.createCharacterJournal(CHARACTER_ID, "Campaign", "x")).rejects.toThrow("create failed");
+      });
+
+      it("throws when the payload is missing the created item", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsCreateCharacterJournal: { data: null, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await expect(client.createCharacterJournal(CHARACTER_ID, "Campaign", "x")).rejects.toThrow(
+          "Failed to create journal"
+        );
+      });
+
+      it("throws for an invalid character UUID without calling fetch", async () => {
+        const client = createAuthenticatedClient();
+        await expect(client.createCharacterJournal("bad", "Campaign", "x")).rejects.toThrow("Invalid UUID format");
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("updateCharacterJournal", () => {
+      it("returns the updated journal item on success", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: {
+                slsUpdateCharacterJournal: {
+                  data: { item: makeJournal({ description: "updated" }) },
+                  success: true,
+                  message: null,
+                },
+              },
+            }),
+            { status: 200 }
+          )
+        );
+
+        const result = await client.updateCharacterJournal(JOURNAL_ID, CHARACTER_ID, "Campaign", "updated");
+        expect(result.description).toBe("updated");
+      });
+
+      it("selects `data` as a scalar (no subselection)", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsUpdateCharacterJournal: { data: { item: makeJournal() }, success: true, message: null } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await client.updateCharacterJournal(JOURNAL_ID, CHARACTER_ID, "Campaign", "x");
+        expect(lastSentQuery()).not.toMatch(/data\s*\{/);
+      });
+
+      it("throws when success is false", async () => {
+        const client = createAuthenticatedClient();
+        fetchSpy.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: { slsUpdateCharacterJournal: { data: null, success: false, message: "update failed" } },
+            }),
+            { status: 200 }
+          )
+        );
+
+        await expect(client.updateCharacterJournal(JOURNAL_ID, CHARACTER_ID, "Campaign", "x")).rejects.toThrow(
+          "update failed"
+        );
+      });
+
+      it("throws for an invalid journal UUID without calling fetch", async () => {
+        const client = createAuthenticatedClient();
+        await expect(client.updateCharacterJournal("bad", CHARACTER_ID, "Campaign", "x")).rejects.toThrow(
+          "Invalid UUID format"
+        );
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+
+      it("throws for an invalid character UUID without calling fetch", async () => {
+        const client = createAuthenticatedClient();
+        await expect(client.updateCharacterJournal(JOURNAL_ID, "bad", "Campaign", "x")).rejects.toThrow(
+          "Invalid UUID format"
+        );
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

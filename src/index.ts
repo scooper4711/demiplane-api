@@ -7,6 +7,7 @@ export type {
   DemiplaneEngine,
   CharacterData,
   CharacterVersion,
+  CharacterJournal,
   AttributeMapping,
   UpdateCharacterOptions,
 } from "./types.js";
