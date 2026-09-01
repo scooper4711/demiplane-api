@@ -147,6 +147,26 @@ export interface AttributeMapping {
 }
 
 /**
+ * A journal entry attached to a character (freeform notes with title + body).
+ */
+export interface CharacterJournal {
+  /** Unique identifier for this journal entry. */
+  objectID: string;
+  /** The character UUID this journal belongs to. */
+  characterId: string;
+  /** Title of the journal entry (e.g. "Campaign", "Allies"). */
+  title: string;
+  /** Rich-text body content. */
+  content: string;
+  /** Plain-text description (often mirrors content). */
+  description: string;
+  /** ISO timestamp of creation. */
+  createdDate: string;
+  /** ISO timestamp of last modification. */
+  lastModified: string;
+}
+
+/**
  * Options for updating a character via the Demiplane GraphQL API.
  */
 export interface UpdateCharacterOptions {
