@@ -205,6 +205,83 @@ describe("DemiplaneClient", () => {
     });
   });
 
+  describe("updateLastAccess", () => {
+    it("returns true when the mutation succeeds", async () => {
+      const client = createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { slsUpdateUserLastAccessed: { success: true } } }), { status: 200 })
+      );
+
+      await expect(client.updateLastAccess()).resolves.toBe(true);
+    });
+
+    it("returns false when the mutation reports failure", async () => {
+      const client = createAuthenticatedClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { slsUpdateUserLastAccessed: { success: false } } }), { status: 200 })
+      );
+
+      await expect(client.updateLastAccess()).resolves.toBe(false);
+    });
+
+    it("throws when no token is configured", async () => {
+      await expect(new DemiplaneClient().updateLastAccess()).rejects.toThrow("A GraphQL token is required");
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("fetchAttributeMapping success", () => {
+    it("maps the response fields to an AttributeMapping", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              demiplane_character_attribute_mapping: [
+                { nexus_id: 12, id: "map-1", attribute_mapping: { strength: "str" } },
+              ],
+            },
+          }),
+          { status: 200 }
+        )
+      );
+
+      const result = await client.fetchAttributeMapping(12);
+      expect(result).toEqual({ nexusId: 12, id: "map-1", attributeMapping: { strength: "str" } });
+    });
+
+    it("throws when no mapping exists for the nexus", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { demiplane_character_attribute_mapping: [] } }), { status: 200 })
+      );
+
+      await expect(client.fetchAttributeMapping(99)).rejects.toThrow("No attribute mapping found for nexus: 99");
+    });
+  });
+
+  describe("executeGraphql response handling", () => {
+    it("throws when the response body is not valid JSON", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(
+        new Response("not json", { status: 200, headers: { "Content-Type": "application/json" } })
+      );
+
+      await expect(client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).rejects.toThrow(
+        "Failed to parse GraphQL response as JSON"
+      );
+    });
+
+    it("throws when the response has no data field", async () => {
+      const client = new DemiplaneClient();
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
+
+      await expect(client.fetchCharacterVersion("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).rejects.toThrow(
+        "GraphQL response missing data"
+      );
+    });
+  });
+
   describe("updateCharacter error handling", () => {
     it("throws error when id is empty", async () => {
       const client = createAuthenticatedClient();
