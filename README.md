@@ -1,3 +1,15 @@
+[![npm version](https://img.shields.io/npm/v/@scooper4711/demiplane-api)](https://www.npmjs.com/package/@scooper4711/demiplane-api)
+[![npm downloads](https://img.shields.io/npm/dm/@scooper4711/demiplane-api)](https://www.npmjs.com/package/@scooper4711/demiplane-api)
+![GitHub Release](https://img.shields.io/github/v/release/scooper4711/demiplane-api)
+![node-current](https://img.shields.io/node/v/@scooper4711/demiplane-api)
+![Types](https://img.shields.io/npm/types/@scooper4711/demiplane-api)
+
+![CI](https://img.shields.io/github/actions/workflow/status/scooper4711/demiplane-api/ci.yml?label=CI)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_demiplane-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=scooper4711_demiplane-api)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_demiplane-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=scooper4711_demiplane-api)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_demiplane-api&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=scooper4711_demiplane-api)
+[![License](https://img.shields.io/npm/l/@scooper4711/demiplane-api)](https://github.com/scooper4711/demiplane-api/blob/main/package.json)
+
 # @scooper4711/demiplane-api
 
 A game-system-agnostic TypeScript client for the [Demiplane Nexus](https://app.demiplane.com) character API. Handles GraphQL queries, engine data parsing, and character updates.
