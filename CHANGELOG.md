@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-04
+
+### Added
+
+- add exports map for robust module resolution
+
+### Changed
+
+- cover untested client.ts paths to clear 80% new-code gate
+- add badges and MIT LICENSE file
+- bump the dev-major group with 6 updates
+- bump typescript-eslint in the dev-minor-patch group
+- lock TypeScript to 6.x in Dependabot
+
+[1.0.0]: https://github.com/scooper4711/demiplane-api/releases/tag/v1.0.0
+
 ## [0.5.0] - 2026-09-01
 
 ### Added
