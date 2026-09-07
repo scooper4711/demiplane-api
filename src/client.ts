@@ -109,6 +109,7 @@ export class DemiplaneClient {
         view_permission
         edit_permission
         updated
+        formated_data
       }
     }`;
 
@@ -121,6 +122,7 @@ export class DemiplaneClient {
         view_permission: number | null;
         edit_permission: number | null;
         updated: string | null;
+        formated_data: unknown;
       }>;
     }>(query, { id: characterId });
 
@@ -144,6 +146,7 @@ export class DemiplaneClient {
       ...(character.view_permission !== null ? { viewPermission: character.view_permission } : {}),
       ...(character.edit_permission !== null ? { editPermission: character.edit_permission } : {}),
       ...(character.updated ? { updated: character.updated } : {}),
+      ...(character.formated_data ? { formatedData: character.formated_data } : {}),
     };
   }
 

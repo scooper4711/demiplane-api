@@ -94,6 +94,12 @@ export interface CharacterData {
   editPermission?: number | undefined;
   /** ISO timestamp of last save, used for optimistic concurrency. */
   updated?: string | undefined;
+  /**
+   * Builder-maintained display blob (e.g. `{ format: { name, class, level,
+   * avatar }, version }`) read by the character overview page. Writers must
+   * pass it through untouched — omitting it nulls the overview subtitle.
+   */
+  formatedData?: unknown;
 }
 
 /**
