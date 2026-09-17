@@ -1,6 +1,35 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
-import { DemiplaneClient } from "../../src/client.js";
+import { DemiplaneClient, normalizeBearerToken } from "../../src/client.js";
 import { DemiplaneApiError } from "../../src/errors.js";
+
+describe("normalizeBearerToken", () => {
+  it("passes a clean token through unchanged", () => {
+    expect(normalizeBearerToken("abc.def.ghi")).toBe("abc.def.ghi");
+  });
+
+  it("strips a leading Bearer prefix case-insensitively and trims", () => {
+    expect(normalizeBearerToken("  bearer abc.def.ghi  ")).toBe("abc.def.ghi");
+    expect(normalizeBearerToken("BEARER abc.def.ghi")).toBe("abc.def.ghi");
+  });
+
+  it("does not strip 'bearer' appearing later in the token", () => {
+    expect(normalizeBearerToken("abc bearer def")).toBe("abc bearer def");
+  });
+
+  it("does not strip a leading 'bearer' with no following boundary", () => {
+    expect(normalizeBearerToken("bearerabc")).toBe("bearerabc");
+  });
+
+  it("normalizes a scheme-only value to empty", () => {
+    expect(normalizeBearerToken("Bearer ")).toBe("");
+    expect(normalizeBearerToken("Bearer")).toBe("");
+  });
+
+  it("is idempotent", () => {
+    const once = normalizeBearerToken("Bearer abc.def.ghi");
+    expect(normalizeBearerToken(once)).toBe(once);
+  });
+});
 
 describe("DemiplaneClient", () => {
   let fetchSpy: MockInstance<typeof fetch>;
@@ -37,6 +66,47 @@ describe("DemiplaneClient", () => {
     it("rejects when no token is configured", async () => {
       await expect(new DemiplaneClient().validateToken()).rejects.toThrow("A GraphQL token is required for validation");
       expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("setToken / isAuthenticated", () => {
+    it("is unauthenticated until a token is set", () => {
+      expect(new DemiplaneClient().isAuthenticated()).toBe(false);
+    });
+
+    it("is authenticated after a non-empty token is set", () => {
+      const client = new DemiplaneClient();
+      client.setToken("gql-tok");
+      expect(client.isAuthenticated()).toBe(true);
+    });
+
+    it("treats an empty or whitespace-only token as clearing the credential", () => {
+      const client = new DemiplaneClient();
+      client.setToken("gql-tok");
+      client.setToken("   ");
+      expect(client.isAuthenticated()).toBe(false);
+    });
+
+    it("treats a token that is only the Bearer prefix as clearing the credential", () => {
+      const client = new DemiplaneClient();
+      client.setToken("gql-tok");
+      client.setToken("Bearer ");
+      expect(client.isAuthenticated()).toBe(false);
+    });
+
+    it("normalizes a pasted Authorization header (trims and strips Bearer) before use", async () => {
+      const client = new DemiplaneClient();
+      client.setToken("  Bearer gql-tok  ");
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { demiplane_user_character: [] } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+      await client.validateToken();
+      const requestInit = fetchSpy.mock.calls[0]![1] as RequestInit;
+      expect((requestInit.headers as Record<string, string>).Authorization).toBe("Bearer gql-tok");
     });
   });
 

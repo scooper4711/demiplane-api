@@ -10,6 +10,31 @@ import type {
 const GRAPHQL_ENDPOINT = "https://apiv4.demiplane.com/v1/graphql";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Matches a leading `Bearer` scheme prefix (case-insensitive) when it is
+ * followed by whitespace or is the entire value. Requiring a boundary (space or
+ * end-of-string) means a scheme-only value (`"Bearer"` / `"Bearer "`) normalizes
+ * to empty, while a real token that merely begins with those letters
+ * (`"bearerabc"`) is left intact.
+ */
+const BEARER_PREFIX_PATTERN = /^bearer(\s+|$)/i;
+
+/**
+ * Normalizes a Demiplane bearer token: trims surrounding whitespace and strips
+ * a leading `Bearer ` scheme prefix. Extensions and DevTools copy the whole
+ * `Authorization` header value (`Bearer <jwt>`), so this accepts that form and
+ * yields the bare JWT the API expects. Idempotent — an already-clean token
+ * passes through unchanged.
+ *
+ * Exported so consumers can apply the same rule when they need to inspect a
+ * token before handing it to {@link DemiplaneClient.setToken} (for example, to
+ * decide whether a configured value is non-empty), keeping a single definition
+ * of what "clean token" means.
+ */
+export function normalizeBearerToken(raw: string): string {
+  return raw.trim().replace(BEARER_PREFIX_PATTERN, "").trim();
+}
+
 export interface UpdateCharacterResult {
   success: boolean;
   message: string | null;
@@ -47,10 +72,20 @@ export class DemiplaneClient {
    * Use this when you already have a valid Hasura JWT (e.g., obtained via
    * browser login or a separate auth script).
    *
-   * @param token - A valid Demiplane GraphQL bearer token (JWT).
+   * The token is normalized (surrounding whitespace trimmed and a leading
+   * `Bearer ` scheme prefix stripped), so callers may pass a raw pasted
+   * `Authorization` header value directly. An empty or whitespace-only token —
+   * or one that is only the `Bearer ` prefix — clears the credential
+   * (equivalent to never having called `setToken`), so callers can reconcile
+   * the client with a settings value in one call without a separate branch for
+   * the empty case.
+   *
+   * @param token - A Demiplane GraphQL bearer token (JWT), optionally with a
+   *   `Bearer ` prefix, or an empty string to clear the current credential.
    */
   setToken(token: string): void {
-    this.graphqlToken = token;
+    const normalized = normalizeBearerToken(token);
+    this.graphqlToken = normalized.length > 0 ? normalized : null;
   }
 
   /**

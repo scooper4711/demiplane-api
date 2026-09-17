@@ -1,4 +1,4 @@
-export { DemiplaneClient } from "./client.js";
+export { DemiplaneClient, normalizeBearerToken } from "./client.js";
 export type { UpdateCharacterResult } from "./client.js";
 export { DemiplaneApiError } from "./errors.js";
 export type {
